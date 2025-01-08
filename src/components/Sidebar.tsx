@@ -1,6 +1,7 @@
-"use client"; // Required for client-side hooks like usePathname
+"use client";
 
 import Link from "next/link";
+import Cookies from "js-cookie";
 import { usePathname } from "next/navigation";
 
 export default function Sidebar() {
@@ -29,6 +30,18 @@ export default function Sidebar() {
         >
           Order Management
         </Link>
+        <div className="w-full flex justify-center items-center">
+          <button
+            onClick={() => {
+              console.log("Logout clicked");
+              Cookies.remove("authToken", { path: "/" });
+              window.location.href = "/login";
+            }}
+            className="block font-bold mt-10 py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 border border-white "
+          >
+            Logout
+          </button>
+        </div>
       </nav>
     </div>
   );
