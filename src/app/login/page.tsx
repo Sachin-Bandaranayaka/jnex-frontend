@@ -18,11 +18,14 @@ export default function LoginPage() {
 
       if (response.status === 200) {
         console.log("Login successful", response.data);
-        const { token, user } = response.data;
+        const {
+          token,
+          // user
+        } = response.data;
         const authToken = JSON.stringify({
           token,
-          username: user.username,
-          role: user.role,
+          // username: user.username,
+          // role: user.role,
         });
         Cookies.set("authToken", authToken, { path: "/" });
         router.push("/dashboard");

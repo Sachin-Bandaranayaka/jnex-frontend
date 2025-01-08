@@ -3,9 +3,21 @@
 import Link from "next/link";
 import Cookies from "js-cookie";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { decodeJWT } from "@/middleware";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Decode the JWT token to get the user's role
+  useEffect(() => {
+    const authToken = Cookies.get("authToken");
+    if (authToken) {
+      const user = decodeJWT(authToken);
+      setUserRole(user?.role || null);
+    }
+  }, []);
 
   const linkClass = (href: string) =>
     `block py-2.5 px-4 rounded transition duration-200 ${
@@ -21,9 +33,14 @@ export default function Sidebar() {
         <Link href="/dashboard" className={linkClass("/dashboard")}>
           Dashboard
         </Link>
-        <Link href="/dashboard/users" className={linkClass("/dashboard/users")}>
-          User Management
-        </Link>
+        {userRole === "admin" && (
+          <Link
+            href="/dashboard/users"
+            className={linkClass("/dashboard/users")}
+          >
+            User Management
+          </Link>
+        )}
         <Link
           href="/dashboard/orders"
           className={linkClass("/dashboard/orders")}
