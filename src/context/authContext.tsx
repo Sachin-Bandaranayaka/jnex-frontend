@@ -20,7 +20,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (token) {
       setAuthToken(extractedToken);
-      console.log(extractedToken);
     }
   }, []);
 
