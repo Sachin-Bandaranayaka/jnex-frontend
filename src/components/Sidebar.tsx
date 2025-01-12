@@ -41,6 +41,9 @@ export default function Sidebar() {
             User Management
           </Link>
         )}
+        <Link href="/dashboard/leads" className={linkClass("/dashboard/leads")}>
+          Leads Management
+        </Link>
         <Link
           href="/dashboard/orders"
           className={linkClass("/dashboard/orders")}
