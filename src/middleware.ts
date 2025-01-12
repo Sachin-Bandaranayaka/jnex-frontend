@@ -5,10 +5,13 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAuthenticated = request.cookies.get("authToken");
 
+  // --------- Commented out for now ----------
+
   // Redirect unauthenticated users to the login page
-  if (!isAuthenticated && path !== "/login") {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
+  // if (!isAuthenticated && path !== "/login") {
+  //   console.log("Redirecting to login");
+  //   return NextResponse.redirect(new URL("/login", request.url));
+  // }
 
   // Redirect authenticated users to the dashboard
   if (isAuthenticated && path === "/login") {
