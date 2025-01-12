@@ -5,13 +5,10 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAuthenticated = request.cookies.get("authToken");
 
-  // --------- Commented out for now ----------
-
   // Redirect unauthenticated users to the login page
-  // if (!isAuthenticated && path !== "/login") {
-  //   console.log("Redirecting to login");
-  //   return NextResponse.redirect(new URL("/login", request.url));
-  // }
+  if (!isAuthenticated && path !== "/login") {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 
   // Redirect authenticated users to the dashboard
   if (isAuthenticated && path === "/login") {
@@ -22,7 +19,6 @@ export function middleware(request: NextRequest) {
   if (isAuthenticated && path === "/dashboard/users") {
     const authToken = isAuthenticated.value;
     const user = decodeJWT(authToken);
-
     if (user.role !== "admin")
       return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -42,4 +38,8 @@ export function decodeJWT(token: string) {
   }
 }
 
-export const matcher = ["/((?!api|_next/static|_next/image|favicon.ico).*)"];
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|assets|images|fonts|css|js).*)",
+  ],
+};
