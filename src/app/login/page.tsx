@@ -7,36 +7,39 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleLogin = async () => {
     try {
+      setError(null);
       const response = await api.post("/auth/login", {
         username,
         password,
       });
 
-      if (response.status === 200) {
-        console.log("Login successful", response.data);
-        const { token } = response.data;
-        const authToken = JSON.stringify({
-          token,
-        });
-        Cookies.set("authToken", authToken, { path: "/" });
+      if (response.status === 200 && response.data.token) {
+        console.log("Login successful");
+        Cookies.set("authToken", response.data.token, { path: "/" });
         router.push("/dashboard");
       } else {
-        alert("Login failed");
+        setError("Invalid response from server");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      alert("Login failed");
+      setError(error.response?.data?.message || "Login failed. Please try again.");
     }
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-100 ">
-      <div className="p-20 bg-white rounded-lg shadow-lg text-black ">
+    <div className="flex items-center justify-center h-screen bg-gray-100">
+      <div className="p-20 bg-white rounded-lg shadow-lg text-black">
         <h1 className="text-2xl font-bold mb-5">Admin Login</h1>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+            {error}
+          </div>
+        )}
         <div className="block mb-2 w-full">
           <span className="block mb-1">Username:</span>
           <input
@@ -60,6 +63,7 @@ export default function LoginPage() {
         <button
           className="mt-5 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           onClick={handleLogin}
+          type="button"
         >
           Login
         </button>
