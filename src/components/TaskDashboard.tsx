@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Task } from '@/interfaces/interfaces';
-import api from '@/lib/api';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
+import { Task } from '@/interfaces/interfaces';
+import { api } from '@/lib/api';
+import { FaPlus } from 'react-icons/fa';
+import TaskForm from './TaskForm';
 
 export default function TaskDashboard() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const router = useRouter();
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
 
     useEffect(() => {
         fetchTasks();
@@ -17,58 +18,49 @@ export default function TaskDashboard() {
 
     const fetchTasks = async () => {
         try {
-            setError(null);
-            // Log the current auth token
-            const authTokenStr = Cookies.get("authToken");
-            console.log("Current auth token:", authTokenStr);
-
-            if (!authTokenStr) {
-                console.error("No auth token found");
-                router.push('/login');
-                return;
-            }
-
-            const response = await api.get('/tasks');  // Changed from /tasks/my-tasks to /tasks
-            console.log("Tasks response:", response);
-            setTasks(response.data);
-        } catch (error: any) {
+            const response = await api.get('/tasks');
+            setTasks(response.data.tasks);
+            setLoading(false);
+        } catch (error) {
             console.error('Error fetching tasks:', error);
-            console.error('Error response:', error.response);
-            if (error.response?.status === 401) {
-                console.error('Unauthorized - redirecting to login');
-                router.push('/login');
-            } else {
-                setError('Failed to fetch tasks. Please try again later.');
-            }
-        } finally {
+            setError('Failed to load tasks');
             setLoading(false);
         }
     };
 
     const handleStatusChange = async (taskId: number, newStatus: string) => {
         try {
-            setError(null);
-            const response = await api.put(`/tasks/${taskId}`, { status: newStatus });
-            console.log("Status update response:", response);
-            fetchTasks();
-        } catch (error: any) {
+            await api.patch(`/tasks/${taskId}`, { status: newStatus });
+            await fetchTasks();
+        } catch (error) {
             console.error('Error updating task status:', error);
-            console.error('Error response:', error.response);
-            if (error.response?.status === 401) {
-                router.push('/login');
+            setError('Failed to update task status');
+        }
+    };
+
+    const handleSubmit = async (taskData: Partial<Task>) => {
+        try {
+            if (editingTask) {
+                await api.patch(`/tasks/${editingTask.id}`, taskData);
             } else {
-                setError('Failed to update task status. Please try again.');
+                await api.post('/tasks', taskData);
             }
+            await fetchTasks();
+            setShowCreateModal(false);
+            setEditingTask(null);
+        } catch (error) {
+            console.error('Error saving task:', error);
+            setError('Failed to save task');
         }
     };
 
     const getPriorityColor = (priority: string) => {
-        switch (priority) {
-            case 'high':
+        switch (priority.toUpperCase()) {
+            case 'HIGH':
                 return 'bg-red-100 text-red-800';
-            case 'medium':
+            case 'MEDIUM':
                 return 'bg-yellow-100 text-yellow-800';
-            case 'low':
+            case 'LOW':
                 return 'bg-green-100 text-green-800';
             default:
                 return 'bg-gray-100 text-gray-800';
@@ -76,50 +68,42 @@ export default function TaskDashboard() {
     };
 
     const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'completed':
-                return 'bg-green-100 text-green-800';
-            case 'in_progress':
+        switch (status.toUpperCase()) {
+            case 'NEW':
                 return 'bg-blue-100 text-blue-800';
-            case 'cancelled':
+            case 'IN_PROGRESS':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'COMPLETED':
+                return 'bg-green-100 text-green-800';
+            case 'CANCELLED':
                 return 'bg-red-100 text-red-800';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
     };
 
-    if (loading) {
-        return <div className="p-4">Loading tasks...</div>;
-    }
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div className="text-red-600">{error}</div>;
 
     return (
-        <div className="p-4">
-            <h2 className="text-2xl font-bold mb-4">My Tasks</h2>
-
-            {/* Task Filters */}
-            <div className="mb-6 grid grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-lg shadow">
-                    <h3 className="font-semibold text-lg mb-2">Pending</h3>
-                    <p className="text-2xl">{tasks.filter(t => t.status === 'pending').length}</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                    <h3 className="font-semibold text-lg mb-2">In Progress</h3>
-                    <p className="text-2xl">{tasks.filter(t => t.status === 'in_progress').length}</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                    <h3 className="font-semibold text-lg mb-2">Completed</h3>
-                    <p className="text-2xl">{tasks.filter(t => t.status === 'completed').length}</p>
-                </div>
+        <div className="container mx-auto px-4 py-8">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">Tasks</h1>
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center"
+                >
+                    <FaPlus className="mr-2" /> New Task
+                </button>
             </div>
 
-            {/* Task List */}
-            <div className="space-y-4">
+            <div className="grid gap-4">
                 {tasks.map((task) => (
                     <div key={task.id} className="bg-white p-4 rounded-lg shadow">
                         <div className="flex justify-between items-start">
                             <div>
                                 <Link
-                                    href={`/dashboard/leads/${task.leadId}`}
+                                    href={`/dashboard/leads/${task.lead_id}`}
                                     className="text-lg font-semibold hover:text-blue-600"
                                 >
                                     {task.title}
@@ -127,7 +111,7 @@ export default function TaskDashboard() {
                                 <p className="text-sm text-gray-600 mt-1">{task.description}</p>
                             </div>
                             <div className="text-sm text-gray-500">
-                                Due: {new Date(task.dueDate).toLocaleString()}
+                                Due: {new Date(task.due_date).toLocaleString()}
                             </div>
                         </div>
 
@@ -140,8 +124,13 @@ export default function TaskDashboard() {
                                     {task.status}
                                 </span>
                                 <span className="text-sm text-gray-500">
-                                    Lead: {task.leadId}
+                                    Lead: {task.lead?.lead_no || task.lead_id}
                                 </span>
+                                {task.user && (
+                                    <span className="text-sm text-gray-500">
+                                        Assigned to: {task.user.name}
+                                    </span>
+                                )}
                             </div>
 
                             <select
@@ -149,21 +138,26 @@ export default function TaskDashboard() {
                                 onChange={(e) => handleStatusChange(task.id, e.target.value)}
                                 className="border rounded px-2 py-1 text-sm"
                             >
-                                <option value="pending">Pending</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
+                                <option value="NEW">New</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="CANCELLED">Cancelled</option>
                             </select>
                         </div>
                     </div>
                 ))}
-
-                {tasks.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                        No tasks assigned to you
-                    </div>
-                )}
             </div>
+
+            <TaskForm
+                open={showCreateModal || !!editingTask}
+                onClose={() => {
+                    setShowCreateModal(false);
+                    setEditingTask(null);
+                }}
+                onSubmit={handleSubmit}
+                initialData={editingTask || undefined}
+                isEdit={!!editingTask}
+            />
         </div>
     );
 } 

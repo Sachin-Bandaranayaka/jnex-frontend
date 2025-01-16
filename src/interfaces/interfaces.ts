@@ -45,16 +45,26 @@ export interface Interaction {
 
 export interface Task {
   id: number;
-  leadId: number;
-  assignedTo: string;
+  lead_id: number;
+  staff_user: number;
   title: string;
   description?: string;
-  dueDate: Date;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  priority: 'low' | 'medium' | 'high';
-  taskType: 'follow_up' | 'meeting' | 'call' | 'other';
-  completedAt?: Date;
-  assignee?: LeadStaff;
+  due_date: Date;
+  status: 'NEW' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  task_type: 'FOLLOW_UP' | 'MEETING' | 'CALL' | 'OTHER';
+  created_at?: Date;
+  updated_at?: Date;
+  user?: {
+    id: number;
+    username: string;
+    name: string;
+  };
+  lead?: {
+    lead_no: string;
+    status: string;
+    score: number;
+  };
 }
 
 export interface Lead {
@@ -69,11 +79,43 @@ export interface Lead {
   lastContactDate?: Date;
   nextFollowUpDate?: Date;
   notes?: string;
-  interactionHistory: Interaction[];
+  interactionHistory?: Interaction[];
   is_deleted: boolean;
   createdAt: Date;
   updatedAt: Date;
   customer: LeadCustomer;
   staff: LeadStaff;
   tasks?: Task[];
+}
+
+export interface OrderItem {
+  id: number;
+  orderId: number;
+  productCode: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  product: {
+    id: number;
+    code: string;
+    name: string;
+    description: string;
+    price: number;
+  };
+}
+
+export interface Order {
+  id: number;
+  orderNo: string;
+  customerId: number;
+  customer: LeadCustomer;
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  totalAmount: number;
+  paymentStatus: 'unpaid' | 'partially_paid' | 'paid' | 'refunded';
+  paymentMethod?: string;
+  shippingAddress: string;
+  notes?: string;
+  items: OrderItem[];
+  createdAt: Date;
+  updatedAt: Date;
 }
