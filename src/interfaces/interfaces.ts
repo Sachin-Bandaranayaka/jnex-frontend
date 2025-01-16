@@ -15,6 +15,20 @@ export interface TableProps {
   data: any[];
 }
 
+// USER
+export interface User {
+  id: number;
+  username: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: string;
+  is_deleted: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
 // LEAD
 interface LeadCustomer {
   id: number;
@@ -50,29 +64,29 @@ export interface Task {
   title: string;
   description?: string;
   dueDate: Date;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  priority: 'low' | 'medium' | 'high';
-  taskType: 'follow_up' | 'meeting' | 'call' | 'other';
+  status: "pending" | "in_progress" | "completed" | "cancelled";
+  priority: "low" | "medium" | "high";
+  taskType: "follow_up" | "meeting" | "call" | "other";
   completedAt?: Date;
   assignee?: LeadStaff;
 }
 
 export interface Lead {
   id: number;
-  leadNo: number;
-  cusPhone: string;
+  lead_no: number;
+  cus_phone: string;
   other: string;
-  productCode: string;
+  product_code: string;
   staffUser: string;
-  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+  status: "new" | "contacted" | "qualified" | "converted" | "lost";
   score: number;
   lastContactDate?: Date;
   nextFollowUpDate?: Date;
   notes?: string;
   interactionHistory: Interaction[];
   is_deleted: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
   customer: LeadCustomer;
   staff: LeadStaff;
   tasks?: Task[];
