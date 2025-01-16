@@ -1,12 +1,5 @@
+import { SelectProps } from "@/interfaces/interfaces";
 import React from "react";
-
-interface SelectProps {
-  options: { value: string; label: string }[];
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  className?: string;
-}
 
 const Select: React.FC<SelectProps> = ({
   options,
