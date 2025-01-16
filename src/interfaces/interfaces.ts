@@ -27,7 +27,34 @@ interface LeadCustomer {
 interface LeadStaff {
   id: number;
   username: string;
+  name: string;
+  email: string;
   role: string;
+}
+
+export interface Interaction {
+  type: string;
+  notes: string;
+  timestamp: Date;
+  user: string;
+  oldStatus?: string;
+  newStatus?: string;
+  taskId?: number;
+  title?: string;
+}
+
+export interface Task {
+  id: number;
+  leadId: number;
+  assignedTo: string;
+  title: string;
+  description?: string;
+  dueDate: Date;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high';
+  taskType: 'follow_up' | 'meeting' | 'call' | 'other';
+  completedAt?: Date;
+  assignee?: LeadStaff;
 }
 
 export interface Lead {
@@ -37,9 +64,16 @@ export interface Lead {
   other: string;
   productCode: string;
   staffUser: string;
+  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+  score: number;
+  lastContactDate?: Date;
+  nextFollowUpDate?: Date;
+  notes?: string;
+  interactionHistory: Interaction[];
   is_deleted: boolean;
   createdAt: Date;
   updatedAt: Date;
   customer: LeadCustomer;
   staff: LeadStaff;
+  tasks?: Task[];
 }
