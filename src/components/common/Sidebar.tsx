@@ -49,11 +49,13 @@ export default function Sidebar() {
 
   const linkClass = (href: string): string => {
     const baseClass = "block py-2.5 px-4 rounded transition duration-200";
-    return `${baseClass} ${pathname === href ? "bg-gray-700" : "hover:bg-gray-700"}`;
+    return `${baseClass} ${
+      pathname === href ? "bg-gray-700" : "hover:bg-gray-700"
+    }`;
   };
 
   return (
-    <div className="bg-gray-800 text-white w-64 space-y-6 py-7 px-2">
+    <div className="bg-primary text-white w-64 space-y-6 py-7 px-2">
       <div className="text-2xl font-semibold text-white px-4">
         Admin Dashboard
       </div>
@@ -70,7 +72,7 @@ export default function Sidebar() {
           </Link>
         )}
         <Link href="/dashboard/leads" className={linkClass("/dashboard/leads")}>
-          Leads Management
+          Lead Management
         </Link>
         <Link href="/dashboard/customers" className={linkClass("/dashboard/customers")}>
           Customer Management

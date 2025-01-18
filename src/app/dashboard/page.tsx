@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
-import MetricCard from '@/components/dashboard/MetricCard';
-import LeadMetrics from '@/components/dashboard/LeadMetrics';
-import TaskMetrics from '@/components/dashboard/TaskMetrics';
-import UserPerformance from '@/components/dashboard/UserPerformance';
-import ActivityTimeline from '@/components/dashboard/ActivityTimeline';
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+import MetricCard from "@/components/dashboard/MetricCard";
+import LeadMetrics from "@/components/dashboard/LeadMetrics";
+import TaskMetrics from "@/components/dashboard/TaskMetrics";
+import UserPerformance from "@/components/dashboard/UserPerformance";
+import ActivityTimeline from "@/components/dashboard/ActivityTimeline";
 
 interface DashboardData {
   leadMetrics: {
@@ -35,7 +35,7 @@ interface DashboardData {
     }>;
   };
   activities: Array<{
-    type: 'lead' | 'task';
+    type: "lead" | "task";
     id: number;
     title: string;
     status: string;
@@ -45,19 +45,21 @@ interface DashboardData {
 }
 
 export default function Dashboard() {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await api.get('/analytics/dashboard');
+        const response = await api.get("/analytics/dashboard");
         setDashboardData(response.data.data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data');
+        console.error("Error fetching dashboard data:", err);
+        setError("Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
@@ -102,7 +104,7 @@ export default function Dashboard() {
       <h1 className="text-2xl font-bold text-gray-800 mb-8">Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <MetricCard
+        {/* <MetricCard
           title="Total Leads"
           value={dashboardData.leadMetrics.totalLeads}
           subtitle="Active leads in pipeline"
@@ -120,7 +122,7 @@ export default function Dashboard() {
           subtitle="Tasks requiring attention"
           trend={dashboardData.taskMetrics.overdueTasks > 5 ? 'down' : 'up'}
           trendLabel={dashboardData.taskMetrics.overdueTasks > 5 ? 'Above threshold' : 'Within threshold'}
-        />
+        /> */}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

@@ -2,11 +2,13 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010/api",
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api",
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+export default api;
 
 // Add a request interceptor
 api.interceptors.request.use(

@@ -1,12 +1,11 @@
 "use client";
-
-import { useState, useEffect } from 'react';
-import { Lead } from '@/interfaces/interfaces';
-import { api } from '@/lib/api';
-import { useRouter } from 'next/navigation';
-import LeadDetails from '@/components/LeadDetails';
-import LeadForm from '@/components/LeadForm';
-import { FaPlus, FaFilter, FaSort } from 'react-icons/fa';
+import { useState, useEffect } from "react";
+import { Lead } from "@/interfaces/interfaces";
+import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import LeadDetails from "@/components/LeadDetails";
+import LeadForm from "@/components/LeadForm";
+import { FaPlus, FaFilter, FaSort } from "react-icons/fa";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -15,93 +14,97 @@ export default function LeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filters, setFilters] = useState({
-    status: '',
-    score: '',
-    dateRange: '30'
+    status: "",
+    score: "",
+    dateRange: "30",
   });
   const [sortConfig, setSortConfig] = useState({
-    key: 'createdAt',
-    direction: 'desc'
+    key: "createdAt",
+    direction: "desc",
   });
 
   const router = useRouter();
 
-  useEffect(() => {
-    fetchLeads();
-  }, [filters, sortConfig]);
-
   const fetchLeads = async () => {
     try {
       setError(null);
-      const response = await api.get('/leads', {
+      const response = await api.get("/leads", {
         params: {
           ...filters,
-          sort: `${sortConfig.key},${sortConfig.direction}`
-        }
+          sort: `${sortConfig.key},${sortConfig.direction}`,
+        },
       });
 
       if (response.data?.success) {
         setLeads(response.data.data);
       } else {
-        setError('Failed to fetch leads');
+        setError("Failed to fetch leads");
       }
     } catch (error: any) {
-      console.error('Error fetching leads:', error);
+      console.error("Error fetching leads:", error);
       if (error.response?.status === 401) {
-        router.push('/login');
+        router.push("/login");
       } else {
-        setError('Failed to fetch leads. Please try again.');
+        setError("Failed to fetch leads. Please try again.");
       }
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchLeads();
+  }, [filters, sortConfig]);
+
   const handleCreateLead = async (data: any) => {
     try {
       setError(null);
-      await api.post('/leads', data);
+      await api.post("/leads", data);
       fetchLeads();
       setShowCreateModal(false);
     } catch (error: any) {
-      console.error('Error creating lead:', error);
-      setError('Failed to create lead. Please try again.');
+      console.error("Error creating lead:", error);
+      setError("Failed to create lead. Please try again.");
     }
   };
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({
+    setSortConfig((prev) => ({
       key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'new':
-        return 'bg-blue-100 text-blue-800';
-      case 'contacted':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'qualified':
-        return 'bg-green-100 text-green-800';
-      case 'converted':
-        return 'bg-purple-100 text-purple-800';
-      case 'lost':
-        return 'bg-red-100 text-red-800';
+      case "new":
+        return "bg-blue-100 text-blue-800";
+      case "contacted":
+        return "bg-yellow-100 text-yellow-800";
+      case "qualified":
+        return "bg-green-100 text-green-800";
+      case "converted":
+        return "bg-purple-100 text-purple-800";
+      case "lost":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-blue-600';
-    if (score >= 40) return 'text-yellow-600';
-    return 'text-red-600';
+    if (score >= 80) return "text-green-600";
+    if (score >= 60) return "text-blue-600";
+    if (score >= 40) return "text-yellow-600";
+    return "text-red-600";
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -120,7 +123,9 @@ export default function LeadsPage() {
       <div className="mb-6 flex gap-4 bg-white p-4 rounded-lg shadow">
         <select
           value={filters.status}
-          onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, status: e.target.value }))
+          }
           className="border rounded px-3 py-2"
         >
           <option value="">All Statuses</option>
@@ -133,7 +138,9 @@ export default function LeadsPage() {
 
         <select
           value={filters.score}
-          onChange={(e) => setFilters(prev => ({ ...prev, score: e.target.value }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, score: e.target.value }))
+          }
           className="border rounded px-3 py-2"
         >
           <option value="">All Scores</option>
@@ -144,7 +151,9 @@ export default function LeadsPage() {
 
         <select
           value={filters.dateRange}
-          onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, dateRange: e.target.value }))
+          }
           className="border rounded px-3 py-2"
         >
           <option value="7">Last 7 days</option>
@@ -159,26 +168,34 @@ export default function LeadsPage() {
         <table className="min-w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('leadNo')}>
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                onClick={() => handleSort("leadNo")}
+              >
                 Lead No. <FaSort className="inline" />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('customer.name')}>
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                onClick={() => handleSort("customer.name")}
+              >
                 Customer <FaSort className="inline" />
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('score')}>
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                onClick={() => handleSort("score")}
+              >
                 Score <FaSort className="inline" />
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Assigned To
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('nextFollowUpDate')}>
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                onClick={() => handleSort("nextFollowUpDate")}
+              >
                 Next Follow-up <FaSort className="inline" />
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -189,15 +206,21 @@ export default function LeadsPage() {
           <tbody className="bg-white divide-y divide-gray-200">
             {leads.map((lead) => (
               <tr key={lead.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {lead.leadNo}
+                <td className="px-6 py-4 whitespace-nowrap">{lead.lead_no}</td>
+                <td className="px-6 py-4">
+                  <div className="text-sm font-medium text-gray-900">
+                    {lead.customer.name}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {lead.customer.phone}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900">{lead.customer.name}</div>
-                  <div className="text-sm text-gray-500">{lead.customer.phone}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(lead.status)}`}>
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
+                      lead.status
+                    )}`}
+                  >
                     {lead.status}
                   </span>
                 </td>
@@ -208,10 +231,14 @@ export default function LeadsPage() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900">{lead.staff.name}</div>
-                  <div className="text-sm text-gray-500">{lead.staff.username}</div>
+                  <div className="text-sm text-gray-500">
+                    {lead.staff.username}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {lead.nextFollowUpDate ? new Date(lead.nextFollowUpDate).toLocaleDateString() : '-'}
+                  {lead.nextFollowUpDate
+                    ? new Date(lead.nextFollowUpDate).toLocaleDateString()
+                    : "-"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <button

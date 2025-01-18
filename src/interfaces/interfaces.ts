@@ -15,6 +15,29 @@ export interface TableProps {
   data: any[];
 }
 
+// COMMON SELECT
+export interface SelectProps {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}
+
+// USER
+export interface User {
+  id: number;
+  username: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: string;
+  is_deleted?: boolean;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
 // LEAD
 interface LeadCustomer {
   id: number;
@@ -50,9 +73,9 @@ export interface Task {
   title: string;
   description?: string;
   due_date: Date;
-  status: 'NEW' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  task_type: 'FOLLOW_UP' | 'MEETING' | 'CALL' | 'OTHER';
+  status: "pending" | "in_progress" | "completed" | "cancelled";
+  priority: "low" | "medium" | "high";
+  task_type: "follow_up" | "meeting" | "call" | "other";
   created_at?: Date;
   updated_at?: Date;
   user?: {
@@ -69,20 +92,20 @@ export interface Task {
 
 export interface Lead {
   id: number;
-  leadNo: number;
-  cusPhone: string;
+  lead_no: number;
+  cus_phone: string;
   other: string;
-  productCode: string;
+  product_code: string;
   staffUser: string;
-  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+  status: "new" | "contacted" | "qualified" | "converted" | "lost";
   score: number;
   lastContactDate?: Date;
   nextFollowUpDate?: Date;
   notes?: string;
   interactionHistory?: Interaction[];
   is_deleted: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
   customer: LeadCustomer;
   staff: LeadStaff;
   tasks?: Task[];
@@ -109,9 +132,15 @@ export interface Order {
   orderNo: string;
   customerId: number;
   customer: LeadCustomer;
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status:
+    | "pending"
+    | "confirmed"
+    | "processing"
+    | "shipped"
+    | "delivered"
+    | "cancelled";
   totalAmount: number;
-  paymentStatus: 'unpaid' | 'partially_paid' | 'paid' | 'refunded';
+  paymentStatus: "unpaid" | "partially_paid" | "paid" | "refunded";
   paymentMethod?: string;
   shippingAddress: string;
   notes?: string;
