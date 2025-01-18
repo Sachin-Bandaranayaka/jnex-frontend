@@ -203,7 +203,7 @@ export default function LeadDetails({ lead, onUpdate }: LeadDetailsProps) {
                   <p className="text-sm text-gray-600">{task.description}</p>
                 </div>
                 <div className="text-sm text-gray-500">
-                  Due: {new Date(task.dueDate).toLocaleString()}
+                  Due: {new Date(task.due_date).toLocaleString()}
                 </div>
               </div>
               <div className="mt-2 flex items-center space-x-2">

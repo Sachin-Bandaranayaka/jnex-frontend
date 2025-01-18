@@ -2,32 +2,33 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 const api = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`,
-  withCredentials: true,
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
+
+export default api;
 
 // Add a request interceptor
 api.interceptors.request.use(
   (config) => {
-    console.log("API Request Config:", {
+    // Log the request configuration (useful for debugging)
+    console.log("API Request:", {
       url: config.url,
       method: config.method,
-      headers: config.headers,
+      data: config.data,
     });
 
-    const token = Cookies.get("authToken");
-    console.log("Auth token from cookie:", token);
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log("Added Authorization header:", config.headers.Authorization);
-    } else {
-      console.warn("No auth token found in cookies");
+    // Get the auth token from cookies
+    const authToken = Cookies.get("authToken");
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
     }
+
     return config;
   },
   (error) => {
-    console.error("Request interceptor error:", error);
     return Promise.reject(error);
   }
 );
@@ -35,21 +36,22 @@ api.interceptors.request.use(
 // Add a response interceptor
 api.interceptors.response.use(
   (response) => {
-    console.log("API Response:", {
-      status: response.status,
-      headers: response.headers,
-      data: response.data,
-    });
     return response;
   },
-  (error) => {
-    console.error("API Error Response:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      headers: error.response?.headers,
-    });
+  async (error) => {
+    // Handle unauthorized errors (401)
+    if (error.response?.status === 401) {
+      // Clear the auth token
+      Cookies.remove("authToken");
+
+      // Redirect to login page if we're in the browser
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    }
+
     return Promise.reject(error);
   }
 );
 
-export default api;
+export { api };
