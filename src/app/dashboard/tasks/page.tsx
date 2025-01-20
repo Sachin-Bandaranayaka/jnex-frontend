@@ -1,6 +1,6 @@
 "use client";
 
-import TaskDashboard from "@/components/task/TaskDashboard";
+import TaskDashboard from "@/components/TaskDashboard";
 
 export default function TasksPage() {
   return (

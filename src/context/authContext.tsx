@@ -6,32 +6,67 @@ import React, {
   useState,
   useEffect,
 } from "react";
-import { AuthContextType } from "@/interfaces/interfaces";
-import Cookies from "js-cookie";
+import { useRouter } from 'next/navigation';
+import { authService, LoginCredentials } from '../services/auth.service';
+
+interface AuthContextType {
+  user: any;
+  loading: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [authToken, setAuthToken] = useState<string | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const token = Cookies.get("authToken");
-    if (token) {
-      setAuthToken(token);
-    }
+    const initializeAuth = async () => {
+      try {
+        const user = authService.getCurrentUser();
+        if (user) {
+          setUser(user);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    initializeAuth();
   }, []);
 
+  const login = async (credentials: LoginCredentials) => {
+    try {
+      const response = await authService.login(credentials);
+      console.log('Login response:', response);
+      setUser(response);
+      console.log('Navigating to dashboard...');
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    authService.logout();
+    setUser(null);
+    router.push('/login');
+  };
+
   return (
-    <AuthContext.Provider value={{ authToken, setAuthToken }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}

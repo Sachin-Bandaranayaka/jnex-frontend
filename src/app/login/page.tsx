@@ -1,96 +1,91 @@
 "use client";
-import { api } from "@/lib/api";
-import { useState } from "react";
-import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
+
+import React, { useState, useEffect } from 'react';
+import { TextField, Button, Paper, Typography, Box, Container, Alert } from '@mui/material';
+import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { login } = useAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setError(null);
-
-      if (!username || !password) {
-        setError("Username and password are required");
-        return;
-      }
-
-      console.log("Attempting login with:", { username });
-      const response = await api.post("/auth/login", {
-        username,
-        password,
-      });
-
-      console.log("Login response:", response);
-
-      if (response.data?.token) {
-        console.log("Login successful, setting token");
-        Cookies.set("authToken", response.data.token, {
-          path: "/",
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax"
-        });
-        router.push("/dashboard");
-      } else {
-        console.error("Invalid response format:", response.data);
-        setError("Invalid response from server");
-      }
-    } catch (error: any) {
-      console.error("Login error:", error);
-      console.error("Error response:", error.response);
-      setError(
-        error.response?.data?.message ||
-        error.message ||
-        "Login failed. Please try again."
-      );
+      await login({ username, password });
+    } catch (err) {
+      setError('Invalid username or password');
     }
   };
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-100">
-      <div className="p-20 bg-white rounded-lg shadow-lg text-black">
-        <h1 className="text-2xl font-bold mb-5">Admin Login</h1>
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-            {error}
-          </div>
-        )}
-        <form onSubmit={handleLogin}>
-          <div className="block mb-2 w-full">
-            <span className="block mb-1">Username:</span>
-            <input
-              className="w-full border border-gray-300 rounded px-3 py-2"
-              type="text"
-              placeholder="Username"
+    <Container component="main" maxWidth="xs">
+      <Box
+        sx={{
+          marginTop: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+          <Typography component="h1" variant="h5" align="center" gutterBottom>
+            JNEX Sales Management
+          </Typography>
+          <Typography component="h2" variant="h6" align="center" sx={{ mb: 3 }}>
+            Sign In
+          </Typography>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="username"
+              label="Username"
+              name="username"
+              autoComplete="username"
+              autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              required
             />
-          </div>
-          <div className="block mb-2 w-full">
-            <span className="block mb-1">Password:</span>
-            <input
-              className="w-full border border-gray-300 rounded px-3 py-2"
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
               type="password"
-              placeholder="Password"
+              id="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
             />
-          </div>
-          <button
-            className="mt-5 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 w-full"
-            type="submit"
-          >
-            Login
-          </button>
-        </form>
-      </div>
-    </div>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+            >
+              Sign In
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
   );
 }

@@ -1,31 +1,27 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-  const isAuthenticated = request.cookies.get("authToken");
+// Define the middleware matcher using the new format
+export const middleware = (request: NextRequest) => {
+  const { pathname } = request.nextUrl;
+  const isAuthenticated = request.cookies.has('authToken');
 
-  // Redirect unauthenticated users to the login page
-  if (!isAuthenticated && path !== "/login") {
-    return NextResponse.redirect(new URL("/login", request.url));
+  // Public paths that don't require authentication
+  const publicPaths = ['/login'];
+
+  // Check if the path is public
+  const isPublicPath = publicPaths.includes(pathname);
+
+  // Redirect to login if trying to access protected route without authentication
+  if (!isAuthenticated && !isPublicPath) {
+    const loginUrl = new URL('/login', request.url);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users to the dashboard
-  if (isAuthenticated && path === "/login") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  // Restrict access to "/dashboard/users" for non-admin users
-  if (isAuthenticated && path === "/dashboard/users") {
-    try {
-      const token = isAuthenticated.value;
-      const user = decodeJWT(token);
-      if (user?.role !== "admin")
-        return NextResponse.redirect(new URL("/dashboard", request.url));
-    } catch (error) {
-      console.error("Error decoding token:", error);
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
+  // Redirect to dashboard if trying to access login while authenticated
+  if (isAuthenticated && isPublicPath) {
+    const dashboardUrl = new URL('/dashboard', request.url);
+    return NextResponse.redirect(dashboardUrl);
   }
 
   return NextResponse.next();
@@ -62,8 +58,16 @@ export function decodeJWT(token: string | undefined | null) {
   }
 }
 
+// New middleware configuration format
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|assets|images|fonts|css|js).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
-};
+}

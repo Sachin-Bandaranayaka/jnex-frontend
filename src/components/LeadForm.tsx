@@ -18,6 +18,21 @@ import { Lead } from '@/interfaces/interfaces';
 import { api } from '@/lib/api';
 import ClientOnly from './ClientOnly';
 
+interface Customer {
+    phone: string;
+    name: string;
+}
+
+interface Product {
+    code: string;
+    name: string;
+}
+
+interface Staff {
+    username: string;
+    name: string;
+}
+
 interface LeadFormProps {
     open: boolean;
     onClose: () => void;
@@ -43,21 +58,21 @@ const LeadForm: React.FC<LeadFormProps> = ({
         next_follow_up_date: '',
     });
 
-    const [customers, setCustomers] = useState([]);
-    const [products, setProducts] = useState([]);
-    const [staff, setStaff] = useState([]);
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [staff, setStaff] = useState<Staff[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (initialData) {
             setFormData({
-                cus_phone: initialData.customer.phone,
-                product_code: initialData.product.code,
-                staff_user: initialData.staff.username,
+                cus_phone: initialData.customer?.phone || '',
+                product_code: initialData.product?.code || '',
+                staff_user: initialData.staff?.username || '',
                 notes: initialData.notes || '',
-                status: initialData.status,
-                score: initialData.score,
+                status: initialData.status || 'new',
+                score: initialData.score || 0,
                 next_follow_up_date: initialData.next_follow_up_date || '',
             });
         }
@@ -71,9 +86,16 @@ const LeadForm: React.FC<LeadFormProps> = ({
                 api.get('/products'),
                 api.get('/users'),
             ]);
-            setCustomers(customersRes.data);
-            setProducts(productsRes.data);
-            setStaff(staffRes.data);
+
+            if (customersRes.data?.data) {
+                setCustomers(customersRes.data.data);
+            }
+            if (productsRes.data?.data) {
+                setProducts(productsRes.data.data);
+            }
+            if (staffRes.data?.data) {
+                setStaff(staffRes.data.data);
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -140,7 +162,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
                                     onChange={handleChange}
                                     label="Customer"
                                 >
-                                    {customers.map((customer: any) => (
+                                    {Array.isArray(customers) && customers.map((customer: Customer) => (
                                         <MenuItem key={customer.phone} value={customer.phone}>
                                             {customer.name} ({customer.phone})
                                         </MenuItem>
@@ -156,7 +178,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
                                     onChange={handleChange}
                                     label="Product"
                                 >
-                                    {products.map((product: any) => (
+                                    {Array.isArray(products) && products.map((product: Product) => (
                                         <MenuItem key={product.code} value={product.code}>
                                             {product.name} ({product.code})
                                         </MenuItem>
@@ -172,7 +194,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
                                     onChange={handleChange}
                                     label="Assigned To"
                                 >
-                                    {staff.map((user: any) => (
+                                    {Array.isArray(staff) && staff.map((user: Staff) => (
                                         <MenuItem key={user.username} value={user.username}>
                                             {user.name} ({user.username})
                                         </MenuItem>
@@ -217,7 +239,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
                             <TextField
                                 name="next_follow_up_date"
                                 label="Next Follow-up Date"
-                                type="datetime-local"
+                                type="date"
                                 value={formData.next_follow_up_date}
                                 onChange={handleChange}
                                 InputLabelProps={{

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import LeadDetails from "@/components/LeadDetails";
 import LeadForm from "@/components/LeadForm";
 import { FaPlus, FaFilter, FaSort } from "react-icons/fa";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -24,6 +25,14 @@ export default function LeadsPage() {
   });
 
   const router = useRouter();
+  const { user } = useAuth();
+
+  // Handle authentication check
+  useEffect(() => {
+    if (!user && !loading) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   const fetchLeads = async () => {
     try {
@@ -36,7 +45,7 @@ export default function LeadsPage() {
       });
 
       if (response.data?.success) {
-        setLeads(response.data.data);
+        setLeads(response.data.data || []);
       } else {
         setError("Failed to fetch leads");
       }
@@ -53,8 +62,10 @@ export default function LeadsPage() {
   };
 
   useEffect(() => {
-    fetchLeads();
-  }, [filters, sortConfig]);
+    if (user) {
+      fetchLeads();
+    }
+  }, [filters, sortConfig, user]);
 
   const handleCreateLead = async (data: any) => {
     try {
@@ -75,7 +86,7 @@ export default function LeadsPage() {
     }));
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string = "") => {
     switch (status.toLowerCase()) {
       case "new":
         return "bg-blue-100 text-blue-800";
@@ -92,7 +103,7 @@ export default function LeadsPage() {
     }
   };
 
-  const getScoreColor = (score: number) => {
+  const getScoreColor = (score: number = 0) => {
     if (score >= 80) return "text-green-600";
     if (score >= 60) return "text-blue-600";
     if (score >= 40) return "text-yellow-600";
@@ -103,6 +114,14 @@ export default function LeadsPage() {
     return (
       <div className="flex justify-center items-center h-screen">
         Loading...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Redirecting to login...
       </div>
     );
   }
@@ -209,10 +228,10 @@ export default function LeadsPage() {
                 <td className="px-6 py-4 whitespace-nowrap">{lead.lead_no}</td>
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-gray-900">
-                    {lead.customer.name}
+                    {lead.customer?.name || 'N/A'}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {lead.customer.phone}
+                    {lead.customer?.phone || 'N/A'}
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -221,18 +240,18 @@ export default function LeadsPage() {
                       lead.status
                     )}`}
                   >
-                    {lead.status}
+                    {lead.status || 'N/A'}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`font-medium ${getScoreColor(lead.score)}`}>
-                    {lead.score}
+                    {lead.score || 0}
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">{lead.staff.name}</div>
+                  <div className="text-sm text-gray-900">{lead.staff?.name || 'N/A'}</div>
                   <div className="text-sm text-gray-500">
-                    {lead.staff.username}
+                    {lead.staff?.username || 'N/A'}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

@@ -5,6 +5,8 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableH
 import { Add as AddIcon } from '@mui/icons-material';
 import ClientOnly from '@/components/ClientOnly';
 import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface Product {
     id: number;
@@ -22,20 +24,32 @@ export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { user } = useAuth();
+    const router = useRouter();
 
     useEffect(() => {
-        fetchProducts();
-    }, []);
+        if (user) {
+            fetchProducts();
+        }
+    }, [user]);
 
     const fetchProducts = async () => {
         try {
             setLoading(true);
             const response = await api.get('/products');
-            setProducts(response.data);
+            if (response.data?.data) {
+                setProducts(response.data.data);
+            } else {
+                setProducts([]);
+            }
             setError(null);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to fetch products:', err);
-            setError('Failed to fetch products. Please try again.');
+            if (err.response?.status === 401) {
+                router.push('/login');
+            } else {
+                setError('Failed to fetch products. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
@@ -62,12 +76,28 @@ export default function ProductsPage() {
         return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
     };
 
+    if (!user) {
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+                <Typography>Please log in to view products</Typography>
+            </Box>
+        );
+    }
+
     if (loading) {
-        return <div>Loading products...</div>;
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+                <Typography>Loading products...</Typography>
+            </Box>
+        );
     }
 
     if (error) {
-        return <div className="text-red-500">{error}</div>;
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+                <Typography color="error">{error}</Typography>
+            </Box>
+        );
     }
 
     return (
@@ -102,7 +132,7 @@ export default function ProductsPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {products.length === 0 ? (
+                            {!Array.isArray(products) || products.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={8} align="center">
                                         No products found
@@ -110,11 +140,7 @@ export default function ProductsPage() {
                                 </TableRow>
                             ) : (
                                 products.map((product) => (
-                                    <TableRow
-                                        key={product.id}
-                                        hover
-                                        style={{ cursor: 'pointer' }}
-                                    >
+                                    <TableRow key={product.id}>
                                         <TableCell>{product.code}</TableCell>
                                         <TableCell>{product.name}</TableCell>
                                         <TableCell>{product.description}</TableCell>
@@ -122,7 +148,7 @@ export default function ProductsPage() {
                                         <TableCell>
                                             <Chip
                                                 label={`${product.stock} units`}
-                                                color={getStockStatusColor(product.stock) as any}
+                                                color={getStockStatusColor(product.stock)}
                                                 size="small"
                                             />
                                         </TableCell>
@@ -130,11 +156,13 @@ export default function ProductsPage() {
                                         <TableCell>
                                             <Chip
                                                 label={formatStatus(product.status)}
-                                                color={getStatusColor(product.status) as any}
+                                                color={getStatusColor(product.status)}
                                                 size="small"
                                             />
                                         </TableCell>
-                                        <TableCell>{new Date(product.createdAt).toLocaleDateString()}</TableCell>
+                                        <TableCell>
+                                            {new Date(product.createdAt).toLocaleDateString()}
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             )}
