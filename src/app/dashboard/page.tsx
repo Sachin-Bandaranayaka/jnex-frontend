@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { Container, Typography, Box, CircularProgress } from '@mui/material';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/context/authContext';
 import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {

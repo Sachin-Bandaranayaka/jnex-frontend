@@ -4,7 +4,7 @@ import { Task } from "@/interfaces/interfaces";
 import { FaPlus } from "react-icons/fa";
 import TaskForm from "./TaskForm";
 import { api } from "@/lib/api";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import React from "react";
 

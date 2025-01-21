@@ -26,7 +26,7 @@ import {
     Logout,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/authContext';
 
 const drawerWidth = 240;
 

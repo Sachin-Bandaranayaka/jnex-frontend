@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import LeadDetails from "@/components/LeadDetails";
 import LeadForm from "@/components/LeadForm";
 import { FaPlus, FaFilter, FaSort } from "react-icons/fa";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/authContext";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);

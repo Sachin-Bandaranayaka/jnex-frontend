@@ -8,7 +8,7 @@ import ClientOnly from '@/components/ClientOnly';
 import { formatDate } from '@/utils/dateUtils';
 import { api } from '@/lib/api';
 import OrderForm from '@/components/OrderForm';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/authContext';
 import { useRouter } from 'next/navigation';
 
 export default function OrdersPage() {

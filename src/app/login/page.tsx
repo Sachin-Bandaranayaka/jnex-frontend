@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Paper, Typography, Box, Container, Alert } from '@mui/material';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/context/authContext';
 
 export default function LoginPage() {
   const [mounted, setMounted] = useState(false);

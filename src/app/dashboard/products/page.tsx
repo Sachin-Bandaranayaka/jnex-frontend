@@ -5,7 +5,7 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableH
 import { Add as AddIcon } from '@mui/icons-material';
 import ClientOnly from '@/components/ClientOnly';
 import { api } from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/authContext';
 import { useRouter } from 'next/navigation';
 
 interface Product {
