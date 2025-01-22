@@ -6,7 +6,7 @@ import LeadForm from "./LeadForm";
 
 interface LeadDashboardProps {
     leads: Lead[];
-    onLeadUpdate: (leadData: Partial<Lead>, leadId?: number) => Promise<boolean>;
+    onLeadUpdate: (leadData: Partial<Lead>, leadId?: string) => Promise<boolean>;
 }
 
 export default function LeadDashboard({ leads = [], onLeadUpdate }: LeadDashboardProps) {

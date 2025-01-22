@@ -6,7 +6,7 @@ import CustomerForm from "./CustomerForm";
 
 interface CustomerDashboardProps {
     customers: Customer[];
-    onCustomerUpdate: (customerData: Partial<Customer>, customerId?: number) => Promise<boolean>;
+    onCustomerUpdate: (customerData: Partial<Customer>, customerId?: string) => Promise<boolean>;
 }
 
 export default function CustomerDashboard({ customers = [], onCustomerUpdate }: CustomerDashboardProps) {
@@ -29,7 +29,7 @@ export default function CustomerDashboard({ customers = [], onCustomerUpdate }: 
         }
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: 'active' | 'inactive'): string => {
         switch (status.toLowerCase()) {
             case "active":
                 return "bg-green-100 text-green-800";
@@ -79,7 +79,7 @@ export default function CustomerDashboard({ customers = [], onCustomerUpdate }: 
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {customers.map((customer) => (
+                            {Array.isArray(customers) && customers.map((customer) => (
                                 <tr
                                     key={customer.id}
                                     className="hover:bg-gray-50 cursor-pointer"
@@ -87,25 +87,25 @@ export default function CustomerDashboard({ customers = [], onCustomerUpdate }: 
                                 >
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">
-                                            {customer.name}
+                                            {customer?.name || 'N/A'}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900">{customer.email}</div>
+                                        <div className="text-sm text-gray-900">{customer?.email || 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900">{customer.phone}</div>
+                                        <div className="text-sm text-gray-900">{customer?.phone || 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900">{customer.address}</div>
+                                        <div className="text-sm text-gray-900">{customer?.address || 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(customer.status)}`}>
-                                            {customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
+                                            {customer?.status?.charAt(0).toUpperCase() + customer?.status?.slice(1)}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900">{customer.totalOrders}</div>
+                                        <div className="text-sm text-gray-900">{customer?.totalOrders ?? 0}</div>
                                     </td>
                                 </tr>
                             ))}

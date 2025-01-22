@@ -42,7 +42,7 @@ export default function CustomersPage() {
         }
     };
 
-    const handleCustomerUpdate = async (customerData: Partial<Customer>, customerId?: number) => {
+    const handleCustomerUpdate = async (customerData: Partial<Customer>, customerId?: string) => {
         try {
             if (customerId) {
                 await api.put(`/api/customers/${customerId}`, customerData);

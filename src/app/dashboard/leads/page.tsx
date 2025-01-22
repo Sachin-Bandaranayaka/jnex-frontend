@@ -41,7 +41,7 @@ export default function LeadsPage() {
     }
   };
 
-  const handleLeadUpdate = async (leadData: Partial<Lead>, leadId?: number) => {
+  const handleLeadUpdate = async (leadData: Partial<Lead>, leadId?: string) => {
     try {
       if (leadId) {
         await api.put(`/api/leads/${leadId}`, leadData);

@@ -31,7 +31,7 @@ export default function CustomerDetails({
         setIsEditing(false);
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: 'active' | 'inactive'): "success" | "error" | "default" => {
         switch (status.toLowerCase()) {
             case "active":
                 return "success";
@@ -60,9 +60,9 @@ export default function CustomerDetails({
             <DialogContent>
                 <Box className="space-y-4">
                     <Box className="flex justify-between items-start">
-                        <Typography variant="h6">{customer.name}</Typography>
+                        <Typography variant="h6">{customer?.name || 'N/A'}</Typography>
                         <Chip
-                            label={customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
+                            label={customer?.status?.charAt(0).toUpperCase() + customer?.status?.slice(1)}
                             color={getStatusColor(customer.status)}
                             size="small"
                         />
@@ -74,9 +74,9 @@ export default function CustomerDetails({
                         <Typography variant="subtitle2" color="textSecondary">
                             Contact Information
                         </Typography>
-                        <Typography>Email: {customer.email}</Typography>
-                        <Typography>Phone: {customer.phone}</Typography>
-                        <Typography>Address: {customer.address}</Typography>
+                        <Typography>Email: {customer?.email || 'N/A'}</Typography>
+                        <Typography>Phone: {customer?.phone || 'N/A'}</Typography>
+                        <Typography>Address: {customer?.address || 'N/A'}</Typography>
                     </Box>
 
                     <Divider />
@@ -85,9 +85,9 @@ export default function CustomerDetails({
                         <Typography variant="subtitle2" color="textSecondary">
                             Order Information
                         </Typography>
-                        <Typography>Total Orders: {customer.totalOrders}</Typography>
+                        <Typography>Total Orders: {customer?.totalOrders ?? 0}</Typography>
                         <Typography>
-                            Created: {new Date(customer.createdAt).toLocaleDateString()}
+                            Created: {customer?.createdAt ? new Date(customer.createdAt).toLocaleDateString() : 'N/A'}
                         </Typography>
                     </Box>
                 </Box>

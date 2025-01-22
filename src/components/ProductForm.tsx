@@ -12,6 +12,7 @@ import {
     Select,
     MenuItem,
 } from "@mui/material";
+import { SelectChangeEvent } from "@mui/material/Select";
 
 interface ProductFormProps {
     open: boolean;
@@ -33,18 +34,25 @@ export default function ProductForm({
             code: "",
             name: "",
             description: "",
-            price: "",
+            price: 0,
             stock: 0,
             category: "",
-            status: "active",
+            status: "active" as const
         }
     );
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
-            [name as string]: value,
+            [name]: name === 'price' || name === 'stock' ? Number(value) : value,
+        }));
+    };
+
+    const handleStatusChange = (e: SelectChangeEvent<'active' | 'inactive'>) => {
+        setFormData((prev) => ({
+            ...prev,
+            status: e.target.value as 'active' | 'inactive',
         }));
     };
 
@@ -64,7 +72,7 @@ export default function ProductForm({
                             label="Code"
                             name="code"
                             value={formData.code || ""}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             required
                         />
 
@@ -73,7 +81,7 @@ export default function ProductForm({
                             label="Name"
                             name="name"
                             value={formData.name || ""}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             required
                         />
 
@@ -82,7 +90,7 @@ export default function ProductForm({
                             label="Description"
                             name="description"
                             value={formData.description || ""}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             multiline
                             rows={3}
                             required
@@ -93,8 +101,8 @@ export default function ProductForm({
                             label="Price"
                             name="price"
                             type="number"
-                            value={formData.price || ""}
-                            onChange={handleChange}
+                            value={formData.price || 0}
+                            onChange={handleInputChange}
                             required
                             inputProps={{ min: 0, step: 0.01 }}
                         />
@@ -105,7 +113,7 @@ export default function ProductForm({
                             name="stock"
                             type="number"
                             value={formData.stock || 0}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             required
                             inputProps={{ min: 0 }}
                         />
@@ -115,7 +123,7 @@ export default function ProductForm({
                             label="Category"
                             name="category"
                             value={formData.category || ""}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             required
                         />
 
@@ -124,7 +132,7 @@ export default function ProductForm({
                             <Select
                                 name="status"
                                 value={formData.status || "active"}
-                                onChange={handleChange}
+                                onChange={handleStatusChange}
                                 label="Status"
                                 required
                             >

@@ -42,7 +42,7 @@ export default function TasksPage() {
     }
   };
 
-  const handleTaskUpdate = async (taskData: Partial<Task>, taskId?: number) => {
+  const handleTaskUpdate = async (taskData: Partial<Task>, taskId?: number | string) => {
     try {
       if (taskId) {
         await api.put(`/api/tasks/${taskId}`, taskData);

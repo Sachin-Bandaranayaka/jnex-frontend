@@ -67,24 +67,17 @@ export interface Interaction {
 }
 
 export interface Task {
-  id: number;
+  id: number | string;
   title: string;
-  description?: string;
-  lead_id?: number;
-  staff_user?: number;
-  due_date: string;
+  description: string;
   priority: 'low' | 'medium' | 'high';
-  task_type: 'follow_up' | 'meeting' | 'call' | 'other';
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  user?: {
-    id: number;
-    name: string;
-  };
-  lead?: {
-    lead_no: string;
-    status: string;
-    score: number;
-  };
+  task_type: string;
+  due_date: string;
+  lead_id?: number;
+  assigned_to?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
@@ -107,18 +100,21 @@ export interface Customer {
   email: string;
   phone: string;
   address: string;
-  status: string;
+  status: 'active' | 'inactive';
+  totalOrders?: number;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface Product {
   id: string;
+  code: string;
   name: string;
   description: string;
   price: number;
+  stock: number;
   category: string;
-  status: string;
+  status: 'active' | 'inactive';
   createdAt?: string;
   updatedAt?: string;
 }

@@ -114,7 +114,7 @@ export default function ProductDetails({
                             Additional Information
                         </Typography>
                         <Typography>
-                            Created: {new Date(product.createdAt).toLocaleDateString()}
+                            Created: {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'N/A'}
                         </Typography>
                     </Box>
                 </Box>

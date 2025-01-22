@@ -1,14 +1,14 @@
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// Initialize the Firebase app in the service worker by passing in the messagingSenderId
+// Replace hardcoded config with environment variables
 firebase.initializeApp({
-  apiKey: "AIzaSyCHNnZIUw1IQGUkPN7zLPLXbUS9MCvj-WQ",
-  authDomain: "jnex-90570.firebaseapp.com",
-  projectId: "jnex-90570",
-  storageBucket: "jnex-90570.firebasestorage.app",
-  messagingSenderId: "589021699009",
-  appId: "1:589021699009:web:a670d1766b349a3cf06d40"
+  apiKey: self.FIREBASE_API_KEY,
+  authDomain: self.FIREBASE_AUTH_DOMAIN,
+  projectId: self.FIREBASE_PROJECT_ID,
+  storageBucket: self.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: self.FIREBASE_MESSAGING_SENDER_ID,
+  appId: self.FIREBASE_APP_ID
 });
 
 // Retrieve Firebase Messaging instance

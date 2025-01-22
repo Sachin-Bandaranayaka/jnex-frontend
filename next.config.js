@@ -14,6 +14,29 @@ const nextConfig = {
         hostname: '**'
       }
     ]
+  },
+  webpack: (config, { isServer }) => {
+    // Handle service worker
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      };
+    }
+    return config;
+  },
+  async headers() {
+    return [
+      {
+        source: '/firebase-messaging-sw.js',
+        headers: [
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/'
+          }
+        ]
+      }
+    ];
   }
 };
 

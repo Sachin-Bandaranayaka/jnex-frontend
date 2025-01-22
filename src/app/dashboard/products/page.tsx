@@ -42,7 +42,7 @@ export default function ProductsPage() {
         }
     };
 
-    const handleProductUpdate = async (productData: Partial<Product>, productId?: number) => {
+    const handleProductUpdate = async (productData: Partial<Product>, productId?: string) => {
         try {
             if (productId) {
                 await api.put(`/api/products/${productId}`, productData);

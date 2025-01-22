@@ -11,7 +11,9 @@ import {
     InputLabel,
     Select,
     MenuItem,
+    Box,
 } from "@mui/material";
+import { SelectChangeEvent } from '@mui/material/Select';
 
 interface CustomerFormProps {
     open: boolean;
@@ -38,11 +40,18 @@ export default function CustomerForm({
         }
     );
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
-            [name as string]: value,
+            [name]: value,
+        }));
+    };
+
+    const handleStatusChange = (e: SelectChangeEvent<'active' | 'inactive'>) => {
+        setFormData((prev) => ({
+            ...prev,
+            status: e.target.value as 'active' | 'inactive',
         }));
     };
 
@@ -62,7 +71,7 @@ export default function CustomerForm({
                             label="Name"
                             name="name"
                             value={formData.name || ""}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             required
                         />
 
@@ -72,7 +81,7 @@ export default function CustomerForm({
                             name="email"
                             type="email"
                             value={formData.email || ""}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             required
                         />
 
@@ -81,7 +90,7 @@ export default function CustomerForm({
                             label="Phone"
                             name="phone"
                             value={formData.phone || ""}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             required
                         />
 
@@ -90,7 +99,7 @@ export default function CustomerForm({
                             label="Address"
                             name="address"
                             value={formData.address || ""}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             multiline
                             rows={2}
                             required
@@ -101,7 +110,7 @@ export default function CustomerForm({
                             <Select
                                 name="status"
                                 value={formData.status || "active"}
-                                onChange={handleChange}
+                                onChange={handleStatusChange}
                                 label="Status"
                                 required
                             >

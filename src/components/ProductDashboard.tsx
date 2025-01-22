@@ -6,7 +6,7 @@ import ProductForm from "./ProductForm";
 
 interface ProductDashboardProps {
     products: Product[];
-    onProductUpdate: (productData: Partial<Product>, productId?: number) => Promise<boolean>;
+    onProductUpdate: (productData: Partial<Product>, productId?: string) => Promise<boolean>;
 }
 
 export default function ProductDashboard({ products = [], onProductUpdate }: ProductDashboardProps) {
