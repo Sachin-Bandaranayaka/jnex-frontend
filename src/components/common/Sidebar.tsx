@@ -48,13 +48,13 @@ export default function Sidebar() {
   };
 
   const linkClass = (href: string): string => {
-    const baseClass = "block py-2.5 px-4 rounded transition duration-200 text-white";
-    return `${baseClass} ${pathname === href ? "bg-blue-700 text-white" : "hover:bg-blue-700"
+    const baseClass = "block py-2.5 px-4 rounded transition duration-200 text-gray-300";
+    return `${baseClass} ${pathname === href ? "bg-gray-700 text-white" : "hover:bg-gray-700 hover:text-white"
       }`;
   };
 
   return (
-    <div className="bg-blue-900 text-white w-64 space-y-6 py-7 px-2 min-h-screen">
+    <div className="bg-gray-900 text-gray-300 w-64 space-y-6 py-7 px-2 min-h-screen">
       <div className="text-2xl font-semibold text-white px-4">
         Admin Dashboard
       </div>
@@ -91,7 +91,7 @@ export default function Sidebar() {
         <div className="w-full flex justify-center items-center">
           <button
             onClick={handleLogout}
-            className="block font-bold mt-10 py-2.5 px-4 rounded transition duration-200 bg-red-600 hover:bg-red-700 text-white border border-white"
+            className="block font-bold mt-10 py-2.5 px-4 rounded transition duration-200 bg-red-600 hover:bg-red-700 text-white"
             type="button"
           >
             Logout
