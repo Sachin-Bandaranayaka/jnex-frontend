@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Task } from "@/interfaces/interfaces";
 import { FaPlus } from "react-icons/fa";
@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import React from "react";
+import { formatDate } from "@/utils/dateUtils";
 
 export default function TaskDashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -27,41 +28,11 @@ export default function TaskDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get("/tasks");
-
-      // Log the response for debugging
-      console.log('Raw API Response:', response);
-      console.log('API Response Data:', response.data);
-
-      // Initialize empty array
-      let tasksData: Task[] = [];
-
-      // Handle different response structures
-      if (response.data?.data && Array.isArray(response.data.data)) {
-        tasksData = response.data.data;
-      } else if (response.data?.tasks && Array.isArray(response.data.tasks)) {
-        tasksData = response.data.tasks;
-      } else if (Array.isArray(response.data)) {
-        tasksData = response.data;
-      }
-
-      // Ensure each task has the required properties
-      tasksData = tasksData.filter(task => {
-        if (!task || typeof task !== 'object') return false;
-        if (!('id' in task) || !('status' in task)) return false;
-        return true;
-      });
-
-      console.log('Processed Tasks:', tasksData);
-      setTasks(tasksData);
+      const response = await api.get("/api/tasks");
+      setTasks(response.data);
     } catch (err: any) {
-      console.error("Error fetching tasks:", err);
-      if (err.response?.status === 401) {
-        router.push('/login');
-      } else {
-        setError(err.message || "Failed to load tasks");
-      }
-      // Set empty array on error
+      console.error("Failed to fetch tasks:", err);
+      setError(err.message || "Failed to fetch tasks. Please try again.");
       setTasks([]);
     } finally {
       setLoading(false);
@@ -94,44 +65,36 @@ export default function TaskDashboard() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toUpperCase()) {
-      case "HIGH":
+  const getPriorityColor = (priority: string): string => {
+    switch (priority.toLowerCase()) {
+      case "high":
         return "bg-red-100 text-red-800";
-      case "MEDIUM":
+      case "medium":
         return "bg-yellow-100 text-yellow-800";
-      case "LOW":
+      case "low":
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
-      case "NEW":
+  const getStatusColor = (status: string): string => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "in_progress":
         return "bg-blue-100 text-blue-800";
-      case "IN_PROGRESS":
-        return "bg-yellow-100 text-yellow-800";
-      case "COMPLETED":
-        return "bg-green-100 text-green-800";
-      case "CANCELLED":
+      case "cancelled":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  // Move the filter operations inside a useMemo to ensure we have valid data
-  const { pendingTasks, completedTasks } = React.useMemo(() => {
-    if (!Array.isArray(tasks)) {
-      console.log('Tasks is not an array:', tasks);
-      return { pendingTasks: [], completedTasks: [] };
-    }
-
+  const { pendingTasks, completedTasks } = useMemo(() => {
     return {
-      pendingTasks: tasks.filter(task => task?.status === 'NEW' || task?.status === 'IN_PROGRESS'),
-      completedTasks: tasks.filter(task => task?.status === 'COMPLETED')
+      pendingTasks: tasks.filter(task => task?.status === 'pending' || task?.status === 'in_progress'),
+      completedTasks: tasks.filter(task => task?.status === 'completed')
     };
   }, [tasks]);
 
@@ -145,7 +108,7 @@ export default function TaskDashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-[200px]">
         <p>Loading tasks...</p>
       </div>
     );
@@ -153,11 +116,60 @@ export default function TaskDashboard() {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-red-600">{error}</p>
+      <div className="flex justify-center items-center min-h-[200px]">
+        <p className="text-red-500">{error}</p>
       </div>
     );
   }
+
+  const renderTaskList = (taskList: Task[], title: string) => (
+    <div className="bg-white rounded-lg shadow mb-6">
+      <div className="p-4 border-b">
+        <h2 className="text-lg font-semibold">{title}</h2>
+      </div>
+      <div className="divide-y">
+        {taskList.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">
+            No tasks found
+          </div>
+        ) : (
+          taskList.map((task) => (
+            <div key={task.id} className="p-4 hover:bg-gray-50">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    {task.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {task.description}
+                  </p>
+                </div>
+                <div className="text-sm text-gray-500">
+                  Due: {formatDate(task.due_date)}
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <span className={`px-2 py-1 rounded-full text-xs ${getPriorityColor(task.priority)}`}>
+                  {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                </span>
+                <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(task.status)}`}>
+                  {task.status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {task.task_type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </span>
+              </div>
+              {task.user && (
+                <div className="mt-2 text-sm text-gray-500">
+                  Assigned to: {task.user.name}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -171,123 +183,9 @@ export default function TaskDashboard() {
         </button>
       </div>
 
-      <div className="grid gap-4">
-        <div>
-          <h2 className="text-xl font-semibold mb-3">Pending Tasks</h2>
-          {pendingTasks.length === 0 ? (
-            <p className="text-gray-500">No pending tasks</p>
-          ) : (
-            pendingTasks.map((task) => (
-              <div key={task.id} className="bg-white p-4 rounded-lg shadow mb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <Link
-                      href={`/dashboard/leads/${task.lead_id}`}
-                      className="text-lg font-semibold hover:text-blue-600"
-                    >
-                      {task.title}
-                    </Link>
-                    <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Due: {new Date(task.due_date).toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getPriorityColor(
-                        task.priority
-                      )}`}
-                    >
-                      {task.priority}
-                    </span>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
-                        task.status
-                      )}`}
-                    >
-                      {task.status}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      Lead: {task.lead?.lead_no || task.lead_id}
-                    </span>
-                    {task.user && (
-                      <span className="text-sm text-gray-500">
-                        Assigned to: {task.user.name}
-                      </span>
-                    )}
-                  </div>
-
-                  <select
-                    value={task.status}
-                    onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                    className="border rounded px-2 py-1 text-sm"
-                  >
-                    <option value="NEW">New</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="CANCELLED">Cancelled</option>
-                  </select>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div>
-          <h2 className="text-xl font-semibold mb-3">Completed Tasks</h2>
-          {completedTasks.length === 0 ? (
-            <p className="text-gray-500">No completed tasks</p>
-          ) : (
-            completedTasks.map((task) => (
-              <div key={task.id} className="bg-white p-4 rounded-lg shadow mb-3 opacity-75">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <Link
-                      href={`/dashboard/leads/${task.lead_id}`}
-                      className="text-lg font-semibold hover:text-blue-600"
-                    >
-                      {task.title}
-                    </Link>
-                    <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Due: {new Date(task.due_date).toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getPriorityColor(
-                        task.priority
-                      )}`}
-                    >
-                      {task.priority}
-                    </span>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
-                        task.status
-                      )}`}
-                    >
-                      {task.status}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      Lead: {task.lead?.lead_no || task.lead_id}
-                    </span>
-                    {task.user && (
-                      <span className="text-sm text-gray-500">
-                        Assigned to: {task.user.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+      <div className="space-y-6">
+        {renderTaskList(pendingTasks, 'Pending Tasks')}
+        {renderTaskList(completedTasks, 'Completed Tasks')}
       </div>
 
       <TaskForm

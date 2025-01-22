@@ -68,19 +68,16 @@ export interface Interaction {
 
 export interface Task {
   id: number;
-  lead_id: number;
-  staff_user: number;
   title: string;
   description?: string;
-  due_date: Date;
-  status: "pending" | "in_progress" | "completed" | "cancelled";
-  priority: "low" | "medium" | "high";
-  task_type: "follow_up" | "meeting" | "call" | "other";
-  created_at?: Date;
-  updated_at?: Date;
+  lead_id?: number;
+  staff_user?: number;
+  due_date: string;
+  priority: 'low' | 'medium' | 'high';
+  task_type: 'follow_up' | 'meeting' | 'call' | 'other';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   user?: {
     id: number;
-    username: string;
     name: string;
   };
   lead?: {
@@ -90,25 +87,55 @@ export interface Task {
   };
 }
 
+export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+
 export interface Lead {
-  id: number;
-  lead_no: number;
-  cus_phone: string;
-  other: string;
-  product_code: string;
-  staffUser: string;
-  status: "new" | "contacted" | "qualified" | "converted" | "lost";
-  score: number;
-  lastContactDate?: Date;
-  nextFollowUpDate?: Date;
-  notes?: string;
-  interactionHistory?: Interaction[];
-  is_deleted: boolean;
-  created_at: Date;
-  updated_at: Date;
-  customer: LeadCustomer;
-  staff: LeadStaff;
-  tasks?: Task[];
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: LeadStatus;
+  source: string;
+  notes: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Order {
+  id: string;
+  customerId: string;
+  products: Array<{
+    productId: string;
+    quantity: number;
+    price: number;
+  }>;
+  totalAmount: number;
+  status: string;
+  paymentStatus: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface OrderItem {
@@ -125,26 +152,4 @@ export interface OrderItem {
     description: string;
     price: number;
   };
-}
-
-export interface Order {
-  id: number;
-  orderNo: string;
-  customerId: number;
-  customer: LeadCustomer;
-  status:
-    | "pending"
-    | "confirmed"
-    | "processing"
-    | "shipped"
-    | "delivered"
-    | "cancelled";
-  totalAmount: number;
-  paymentStatus: "unpaid" | "partially_paid" | "paid" | "refunded";
-  paymentMethod?: string;
-  shippingAddress: string;
-  notes?: string;
-  items: OrderItem[];
-  createdAt: Date;
-  updatedAt: Date;
 }

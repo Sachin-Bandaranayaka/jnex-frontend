@@ -1,271 +1,195 @@
 import { useState } from "react";
-import { Lead, Task } from "@/interfaces/interfaces";
-import api from "@/lib/api";
+import { Lead, LeadStatus } from "@/interfaces/interfaces";
+import { api } from "@/lib/api";
 
 interface LeadDetailsProps {
   lead: Lead;
+  onClose: () => void;
   onUpdate: () => void;
 }
 
-export default function LeadDetails({ lead, onUpdate }: LeadDetailsProps) {
-  const [newTask, setNewTask] = useState({
-    title: "",
-    description: "",
-    dueDate: "",
-    priority: "medium",
-    taskType: "follow_up",
-  });
-  const [newNote, setNewNote] = useState("");
+export default function LeadDetails({ lead, onClose, onUpdate }: LeadDetailsProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedLead, setEditedLead] = useState<Lead>(lead);
+  const [error, setError] = useState<string | null>(null);
 
-  // Status options with colors
-  const statusOptions = {
-    new: { label: "New", color: "bg-blue-500" },
-    contacted: { label: "Contacted", color: "bg-yellow-500" },
-    qualified: { label: "Qualified", color: "bg-green-500" },
-    converted: { label: "Converted", color: "bg-purple-500" },
-    lost: { label: "Lost", color: "bg-red-500" },
-  };
-
-  // Update lead status
-  const handleStatusChange = async (status: string) => {
+  const handleSave = async () => {
     try {
-      await api.put(`/leads/${lead.id}/status`, {
-        status,
-        notes: `Status changed to ${status}`,
-      });
+      await api.put(`/api/leads/${lead.id}`, editedLead);
+      setIsEditing(false);
       onUpdate();
-    } catch (error) {
-      console.error("Error updating status:", error);
-    }
-  };
-
-  // Add a new task
-  const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await api.post(`/leads/${lead.id}/tasks`, newTask);
-      setNewTask({
-        title: "",
-        description: "",
-        dueDate: "",
-        priority: "medium",
-        taskType: "follow_up",
-      });
-      onUpdate();
-    } catch (error) {
-      console.error("Error adding task:", error);
-    }
-  };
-
-  // Add a new interaction note
-  const handleAddNote = async () => {
-    try {
-      await api.post(`/leads/${lead.id}/interactions`, {
-        type: "note",
-        notes: newNote,
-      });
-      setNewNote("");
-      onUpdate();
-    } catch (error) {
-      console.error("Error adding note:", error);
+    } catch (err) {
+      console.error("Failed to update lead:", err);
+      setError("Failed to update lead. Please try again.");
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 space-y-6">
-      {/* Lead Status and Score */}
-      <div className="flex justify-between items-center">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold">Lead #{lead.lead_no}</h2>
-          <div className="flex items-center space-x-2">
-            <span className="font-semibold">Status:</span>
-            <select
-              value={lead.status}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              className="border rounded px-2 py-1"
-            >
-              {Object.entries(statusOptions).map(([value, { label }]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="font-semibold">Score:</span>
-            <span
-              className={`px-2 py-1 rounded ${
-                lead.score >= 50 ? "bg-green-100" : "bg-yellow-100"
-              }`}
-            >
-              {lead.score}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Customer Information */}
-      <div className="border-t pt-4">
-        <h3 className="font-semibold mb-2">Customer Information</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p>
-              <span className="font-medium">Name:</span> {lead.customer.name}
-            </p>
-            <p>
-              <span className="font-medium">Phone:</span> {lead.customer.phone}
-            </p>
-          </div>
-          <div>
-            <p>
-              <span className="font-medium">Email:</span> {lead.customer.email}
-            </p>
-            <p>
-              <span className="font-medium">Address:</span>{" "}
-              {lead.customer.address}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Tasks Section */}
-      <div className="border-t pt-4">
-        <h3 className="font-semibold mb-2">Tasks</h3>
-        <form onSubmit={handleAddTask} className="space-y-4 mb-4">
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Task title"
-              value={newTask.title}
-              onChange={(e) =>
-                setNewTask({ ...newTask, title: e.target.value })
-              }
-              className="border rounded px-3 py-2"
-              required
-            />
-            <input
-              type="datetime-local"
-              value={newTask.dueDate}
-              onChange={(e) =>
-                setNewTask({ ...newTask, dueDate: e.target.value })
-              }
-              className="border rounded px-3 py-2"
-              required
-            />
-            <select
-              value={newTask.priority}
-              onChange={(e) =>
-                setNewTask({ ...newTask, priority: e.target.value })
-              }
-              className="border rounded px-3 py-2"
-            >
-              <option value="low">Low Priority</option>
-              <option value="medium">Medium Priority</option>
-              <option value="high">High Priority</option>
-            </select>
-            <select
-              value={newTask.taskType}
-              onChange={(e) =>
-                setNewTask({ ...newTask, taskType: e.target.value })
-              }
-              className="border rounded px-3 py-2"
-            >
-              <option value="follow_up">Follow Up</option>
-              <option value="meeting">Meeting</option>
-              <option value="call">Call</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <textarea
-            placeholder="Task description"
-            value={newTask.description}
-            onChange={(e) =>
-              setNewTask({ ...newTask, description: e.target.value })
-            }
-            className="border rounded px-3 py-2 w-full"
-            rows={2}
-          />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Lead Details</h2>
           <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
           >
-            Add Task
+            ×
           </button>
-        </form>
+        </div>
 
-        {/* Task List */}
-        <div className="space-y-2">
-          {lead.tasks?.map((task: Task) => (
-            <div key={task.id} className="border rounded p-3">
-              <div className="flex justify-between items-start">
+        {error && (
+          <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {isEditing ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={editedLead.name}
+                  onChange={(e) =>
+                    setEditedLead({ ...editedLead, name: e.target.value })
+                  }
+                  className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editedLead.email}
+                  onChange={(e) =>
+                    setEditedLead({ ...editedLead, email: e.target.value })
+                  }
+                  className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={editedLead.phone}
+                  onChange={(e) =>
+                    setEditedLead({ ...editedLead, phone: e.target.value })
+                  }
+                  className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Status
+                </label>
+                <select
+                  value={editedLead.status}
+                  onChange={(e) =>
+                    setEditedLead({ ...editedLead, status: e.target.value as LeadStatus })
+                  }
+                  className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                >
+                  <option value="new">New</option>
+                  <option value="contacted">Contacted</option>
+                  <option value="qualified">Qualified</option>
+                  <option value="converted">Converted</option>
+                  <option value="lost">Lost</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Source
+                </label>
+                <input
+                  type="text"
+                  value={editedLead.source}
+                  onChange={(e) =>
+                    setEditedLead({ ...editedLead, source: e.target.value })
+                  }
+                  className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Notes
+                </label>
+                <textarea
+                  value={editedLead.notes}
+                  onChange={(e) =>
+                    setEditedLead({ ...editedLead, notes: e.target.value })
+                  }
+                  rows={4}
+                  className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium">{task.title}</h4>
-                  <p className="text-sm text-gray-600">{task.description}</p>
+                  <h3 className="text-sm font-medium text-gray-500">Name</h3>
+                  <p className="mt-1">{lead.name}</p>
                 </div>
-                <div className="text-sm text-gray-500">
-                  Due: {new Date(task.due_date).toLocaleString()}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Email</h3>
+                  <p className="mt-1">{lead.email}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Phone</h3>
+                  <p className="mt-1">{lead.phone}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Status</h3>
+                  <p className="mt-1">{lead.status}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Source</h3>
+                  <p className="mt-1">{lead.source}</p>
                 </div>
               </div>
-              <div className="mt-2 flex items-center space-x-2">
-                <span
-                  className={`px-2 py-1 rounded text-sm ${
-                    task.priority === "high"
-                      ? "bg-red-100"
-                      : task.priority === "medium"
-                      ? "bg-yellow-100"
-                      : "bg-green-100"
-                  }`}
-                >
-                  {task.priority}
-                </span>
-                <span
-                  className={`px-2 py-1 rounded text-sm ${
-                    task.status === "completed"
-                      ? "bg-green-100"
-                      : task.status === "in_progress"
-                      ? "bg-blue-100"
-                      : "bg-gray-100"
-                  }`}
-                >
-                  {task.status}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Interaction History */}
-      <div className="border-t pt-4">
-        <h3 className="font-semibold mb-2">Interaction History</h3>
-        <div className="mb-4">
-          <textarea
-            placeholder="Add a note..."
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            className="border rounded px-3 py-2 w-full"
-            rows={3}
-          />
-          <button
-            onClick={handleAddNote}
-            className="mt-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Add Note
-          </button>
-        </div>
-        <div className="space-y-2">
-          {lead.interactionHistory?.map((interaction, index) => (
-            <div key={index} className="border-l-4 border-blue-500 pl-3 py-2">
-              <div className="text-sm text-gray-500">
-                {new Date(interaction.timestamp).toLocaleString()} -{" "}
-                {interaction.user}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Notes</h3>
+                <p className="mt-1 whitespace-pre-wrap">{lead.notes}</p>
               </div>
-              <div className="mt-1">
-                <span className="font-medium">{interaction.type}:</span>{" "}
-                {interaction.notes}
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                >
+                  Edit
+                </button>
               </div>
-            </div>
-          ))}
+            </>
+          )}
         </div>
       </div>
     </div>

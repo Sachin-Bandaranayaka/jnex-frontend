@@ -14,7 +14,7 @@ import {
     MenuItem,
     Box,
 } from '@mui/material';
-import { Lead } from '@/interfaces/interfaces';
+import { Lead, LeadStatus } from '@/interfaces/interfaces';
 import { api } from '@/lib/api';
 import ClientOnly from './ClientOnly';
 
@@ -36,7 +36,7 @@ interface Staff {
 interface LeadFormProps {
     open: boolean;
     onClose: () => void;
-    onSubmit: (lead: any) => void;
+    onSubmit: (data: Partial<Lead>) => void;
     initialData?: Lead;
     isEdit?: boolean;
 }
@@ -48,33 +48,26 @@ const LeadForm: React.FC<LeadFormProps> = ({
     initialData,
     isEdit = false,
 }) => {
-    const [formData, setFormData] = useState({
-        cus_phone: '',
-        product_code: '',
-        staff_user: '',
-        notes: '',
-        status: 'new',
-        score: 0,
-        next_follow_up_date: '',
-    });
+    const [formData, setFormData] = useState<Partial<Lead>>(
+        initialData || {
+            name: '',
+            email: '',
+            phone: '',
+            status: 'new' as LeadStatus,
+            source: '',
+            notes: '',
+        }
+    );
 
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [staff, setStaff] = useState<Staff[]>([]);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (initialData) {
-            setFormData({
-                cus_phone: initialData.customer?.phone || '',
-                product_code: initialData.product?.code || '',
-                staff_user: initialData.staff?.username || '',
-                notes: initialData.notes || '',
-                status: initialData.status || 'new',
-                score: initialData.score || 0,
-                next_follow_up_date: initialData.next_follow_up_date || '',
-            });
+            setFormData(initialData);
         }
         fetchData();
     }, [initialData]);
@@ -98,33 +91,12 @@ const LeadForm: React.FC<LeadFormProps> = ({
             }
         } catch (error) {
             console.error('Error fetching data:', error);
-        } finally {
-            setLoading(false);
         }
-    };
-
-    const validateForm = () => {
-        const newErrors: Record<string, string> = {};
-
-        if (!formData.cus_phone) {
-            newErrors.cus_phone = 'Customer is required';
-        }
-        if (!formData.product_code) {
-            newErrors.product_code = 'Product is required';
-        }
-        if (!formData.staff_user) {
-            newErrors.staff_user = 'Staff member is required';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (validateForm()) {
-            onSubmit(formData);
-        }
+        onSubmit(formData);
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
@@ -133,129 +105,132 @@ const LeadForm: React.FC<LeadFormProps> = ({
             ...prev,
             [name as string]: value,
         }));
-        if (errors[name as string]) {
-            setErrors((prev) => ({
-                ...prev,
-                [name as string]: '',
-            }));
-        }
     };
 
-    if (loading) {
-        return null;
-    }
+    if (!open) return null;
 
     return (
         <ClientOnly>
-            <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-                <DialogTitle>
-                    {isEdit ? 'Edit Lead' : 'Add New Lead'}
-                </DialogTitle>
-                <form onSubmit={handleSubmit}>
-                    <DialogContent>
-                        <Box display="flex" flexDirection="column" gap={2}>
-                            <FormControl fullWidth error={!!errors.cus_phone}>
-                                <InputLabel>Customer</InputLabel>
-                                <Select
-                                    name="cus_phone"
-                                    value={formData.cus_phone}
-                                    onChange={handleChange}
-                                    label="Customer"
-                                >
-                                    {Array.isArray(customers) && customers.map((customer: Customer) => (
-                                        <MenuItem key={customer.phone} value={customer.phone}>
-                                            {customer.name} ({customer.phone})
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                    <h2 className="text-xl font-bold mb-4">
+                        {isEdit ? 'Edit Lead' : 'New Lead'}
+                    </h2>
 
-                            <FormControl fullWidth error={!!errors.product_code}>
-                                <InputLabel>Product</InputLabel>
-                                <Select
-                                    name="product_code"
-                                    value={formData.product_code}
-                                    onChange={handleChange}
-                                    label="Product"
-                                >
-                                    {Array.isArray(products) && products.map((product: Product) => (
-                                        <MenuItem key={product.code} value={product.code}>
-                                            {product.name} ({product.code})
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+                            {error}
+                        </div>
+                    )}
 
-                            <FormControl fullWidth error={!!errors.staff_user}>
-                                <InputLabel>Assigned To</InputLabel>
-                                <Select
-                                    name="staff_user"
-                                    value={formData.staff_user}
-                                    onChange={handleChange}
-                                    label="Assigned To"
-                                >
-                                    {Array.isArray(staff) && staff.map((user: Staff) => (
-                                        <MenuItem key={user.username} value={user.username}>
-                                            {user.name} ({user.username})
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Name
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.name || ''}
+                                onChange={handleChange}
+                                name="name"
+                                className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                                required
+                            />
+                        </div>
 
-                            <TextField
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Email
+                            </label>
+                            <input
+                                type="email"
+                                value={formData.email || ''}
+                                onChange={handleChange}
+                                name="email"
+                                className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Phone
+                            </label>
+                            <input
+                                type="tel"
+                                value={formData.phone || ''}
+                                onChange={handleChange}
+                                name="phone"
+                                className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Status
+                            </label>
+                            <select
+                                value={formData.status || 'new'}
+                                onChange={handleChange}
+                                name="status"
+                                className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                            >
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="qualified">Qualified</option>
+                                <option value="converted">Converted</option>
+                                <option value="lost">Lost</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Source
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.source || ''}
+                                onChange={handleChange}
+                                name="source"
+                                className="mt-1 block w-full border rounded-md shadow-sm p-2"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Notes
+                            </label>
+                            <textarea
+                                value={formData.notes || ''}
+                                onChange={handleChange}
                                 name="notes"
-                                label="Notes"
-                                value={formData.notes}
-                                onChange={handleChange}
-                                multiline
-                                rows={3}
+                                rows={4}
+                                className="mt-1 block w-full border rounded-md shadow-sm p-2"
                             />
+                        </div>
 
-                            <FormControl fullWidth>
-                                <InputLabel>Status</InputLabel>
-                                <Select
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleChange}
-                                    label="Status"
-                                >
-                                    <MenuItem value="new">New</MenuItem>
-                                    <MenuItem value="contacted">Contacted</MenuItem>
-                                    <MenuItem value="qualified">Qualified</MenuItem>
-                                    <MenuItem value="converted">Converted</MenuItem>
-                                    <MenuItem value="lost">Lost</MenuItem>
-                                </Select>
-                            </FormControl>
-
-                            <TextField
-                                name="score"
-                                label="Score"
-                                type="number"
-                                value={formData.score}
-                                onChange={handleChange}
-                                inputProps={{ min: 0, max: 100 }}
-                            />
-
-                            <TextField
-                                name="next_follow_up_date"
-                                label="Next Follow-up Date"
-                                type="date"
-                                value={formData.next_follow_up_date}
-                                onChange={handleChange}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                            />
-                        </Box>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={onClose}>Cancel</Button>
-                        <Button type="submit" variant="contained" color="primary">
-                            {isEdit ? 'Update' : 'Create'}
-                        </Button>
-                    </DialogActions>
-                </form>
-            </Dialog>
+                        <div className="flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                                disabled={loading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                                disabled={loading}
+                            >
+                                {loading ? 'Saving...' : isEdit ? 'Update' : 'Create Lead'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </ClientOnly>
     );
 };

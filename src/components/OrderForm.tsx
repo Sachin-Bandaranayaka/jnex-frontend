@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Order, Customer, Product } from '@/interfaces/interfaces';
+import { api } from '@/lib/api';
 import {
     Dialog,
     DialogTitle,
@@ -14,123 +16,149 @@ import {
     Box,
     Typography,
     Grid,
+    SelectChangeEvent,
 } from '@mui/material';
 import { Close as CloseIcon, Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
-import { api } from '@/lib/api';
-
-interface Customer {
-    id: number;
-    name: string;
-}
-
-interface Product {
-    id: number;
-    code: string;
-    name: string;
-    price: number;
-}
-
-interface OrderItem {
-    product_code: string;
-    quantity: number;
-    unit_price: number;
-}
 
 interface OrderFormProps {
     open: boolean;
     onClose: () => void;
     onSubmit: () => void;
+    initialData?: Order;
 }
 
-export default function OrderForm({ open, onClose, onSubmit }: OrderFormProps) {
-    const [customers, setCustomers] = useState<Customer[]>([]);
-    const [products, setProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
+interface OrderFormData {
+    customer_id: string;
+    products: Array<{
+        product_id: string;
+        quantity: number;
+        price: number;
+    }>;
+    total_amount: number;
+    status: string;
+    payment_status: string;
+}
+
+export default function OrderForm({ open, onClose, onSubmit, initialData }: OrderFormProps) {
+    const [formData, setFormData] = useState<OrderFormData>({
         customer_id: '',
-        shipping_address: '',
-        payment_method: 'cash',
-        notes: '',
-        items: [{ product_code: '', quantity: 1, unit_price: 0 }]
+        products: [],
+        total_amount: 0,
+        status: 'pending',
+        payment_status: 'pending'
     });
 
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
-        fetchCustomers();
-        fetchProducts();
-    }, []);
+        if (open) {
+            fetchData();
+        }
+    }, [open]);
 
-    const fetchCustomers = async () => {
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                customer_id: initialData.customerId,
+                products: initialData.products.map(p => ({
+                    product_id: p.productId,
+                    quantity: p.quantity,
+                    price: p.price
+                })),
+                total_amount: initialData.totalAmount,
+                status: initialData.status,
+                payment_status: initialData.paymentStatus
+            });
+        }
+    }, [initialData]);
+
+    const fetchData = async () => {
         try {
-            const response = await api.get('/customers');
-            setCustomers(response.data);
-        } catch (error) {
-            console.error('Error fetching customers:', error);
+            const [customersRes, productsRes] = await Promise.all([
+                api.get('/api/customers'),
+                api.get('/api/products')
+            ]);
+            setCustomers(customersRes.data);
+            setProducts(productsRes.data);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            setError('Failed to load form data');
         }
     };
 
-    const fetchProducts = async () => {
-        try {
-            const response = await api.get('/products');
-            setProducts(response.data);
-        } catch (error) {
-            console.error('Error fetching products:', error);
-        }
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name as string]: value
+            [name]: value
         }));
     };
 
-    const handleItemChange = (index: number, field: keyof OrderItem, value: any) => {
-        const newItems = [...formData.items];
-        newItems[index] = {
-            ...newItems[index],
-            [field]: value
-        };
+    const handleProductChange = (index: number, field: string, value: string | number) => {
+        setFormData(prev => {
+            const newProducts = [...prev.products];
+            newProducts[index] = {
+                ...newProducts[index],
+                [field]: value
+            };
 
-        // If product is selected, set its price
-        if (field === 'product_code') {
-            const product = products.find(p => p.code === value);
-            if (product) {
-                newItems[index].unit_price = product.price;
-            }
-        }
+            // Recalculate total amount
+            const total = newProducts.reduce((sum, product) => {
+                return sum + (product.quantity * product.price);
+            }, 0);
 
-        setFormData(prev => ({
-            ...prev,
-            items: newItems
-        }));
-    };
-
-    const addItem = () => {
-        setFormData(prev => ({
-            ...prev,
-            items: [...prev.items, { product_code: '', quantity: 1, unit_price: 0 }]
-        }));
-    };
-
-    const removeItem = (index: number) => {
-        if (formData.items.length > 1) {
-            setFormData(prev => ({
+            return {
                 ...prev,
-                items: prev.items.filter((_, i) => i !== index)
-            }));
-        }
+                products: newProducts,
+                total_amount: total
+            };
+        });
+    };
+
+    const addProduct = () => {
+        setFormData(prev => ({
+            ...prev,
+            products: [
+                ...prev.products,
+                { product_id: '', quantity: 1, price: 0 }
+            ]
+        }));
+    };
+
+    const removeProduct = (index: number) => {
+        setFormData(prev => {
+            const newProducts = prev.products.filter((_, i) => i !== index);
+            const total = newProducts.reduce((sum, product) => {
+                return sum + (product.quantity * product.price);
+            }, 0);
+
+            return {
+                ...prev,
+                products: newProducts,
+                total_amount: total
+            };
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
         setLoading(true);
+
         try {
-            await api.post('/orders', formData);
+            if (initialData?.id) {
+                await api.put(`/api/orders/${initialData.id}`, formData);
+            } else {
+                await api.post('/api/orders', formData);
+            }
             onSubmit();
             onClose();
-        } catch (error) {
-            console.error('Error creating order:', error);
+        } catch (err: any) {
+            console.error('Failed to save order:', err);
+            setError(err.message || 'Failed to save order');
         } finally {
             setLoading(false);
         }
@@ -139,142 +167,140 @@ export default function OrderForm({ open, onClose, onSubmit }: OrderFormProps) {
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
             <DialogTitle>
-                Create New Order
-                <IconButton
-                    aria-label="close"
-                    onClick={onClose}
-                    sx={{ position: 'absolute', right: 8, top: 8 }}
-                >
-                    <CloseIcon />
-                </IconButton>
+                {initialData ? 'Edit Order' : 'New Order'}
             </DialogTitle>
             <form onSubmit={handleSubmit}>
                 <DialogContent>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            <FormControl fullWidth>
-                                <InputLabel>Customer</InputLabel>
-                                <Select
-                                    name="customer_id"
-                                    value={formData.customer_id}
-                                    onChange={handleChange}
-                                    required
-                                >
-                                    {customers.map(customer => (
-                                        <MenuItem key={customer.id} value={customer.id}>
-                                            {customer.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
+                    <Box display="flex" flexDirection="column" gap={2}>
+                        {error && (
+                            <Box sx={{ color: 'error.main', mb: 2 }}>
+                                {error}
+                            </Box>
+                        )}
 
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Shipping Address"
-                                name="shipping_address"
-                                value={formData.shipping_address}
+                        <FormControl fullWidth>
+                            <InputLabel>Customer</InputLabel>
+                            <Select
+                                name="customer_id"
+                                value={formData.customer_id}
                                 onChange={handleChange}
                                 required
-                                multiline
-                                rows={2}
-                            />
-                        </Grid>
+                            >
+                                {customers.map(customer => (
+                                    <MenuItem key={customer.id} value={customer.id}>
+                                        {customer.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
 
-                        <Grid item xs={12}>
-                            <FormControl fullWidth>
-                                <InputLabel>Payment Method</InputLabel>
-                                <Select
-                                    name="payment_method"
-                                    value={formData.payment_method}
-                                    onChange={handleChange}
-                                    required
-                                >
-                                    <MenuItem value="cash">Cash</MenuItem>
-                                    <MenuItem value="card">Card</MenuItem>
-                                    <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
+                        <Box>
+                            <Button
+                                type="button"
+                                variant="outlined"
+                                onClick={addProduct}
+                                sx={{ mb: 2 }}
+                            >
+                                Add Product
+                            </Button>
 
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Notes"
-                                name="notes"
-                                value={formData.notes}
-                                onChange={handleChange}
-                                multiline
-                                rows={2}
-                            />
-                        </Grid>
+                            {formData.products.map((product, index) => (
+                                <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                                    <Box display="flex" gap={2} alignItems="flex-start">
+                                        <FormControl fullWidth>
+                                            <InputLabel>Product</InputLabel>
+                                            <Select
+                                                value={product.product_id}
+                                                onChange={(e) => handleProductChange(index, 'product_id', e.target.value)}
+                                                required
+                                            >
+                                                {products.map(p => (
+                                                    <MenuItem key={p.id} value={p.id}>
+                                                        {p.name} - ${p.price}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
 
-                        <Grid item xs={12}>
-                            <Typography variant="h6" gutterBottom>
-                                Order Items
-                            </Typography>
-                            {formData.items.map((item, index) => (
-                                <Box key={index} sx={{ mb: 2, display: 'flex', gap: 1 }}>
-                                    <FormControl sx={{ flex: 2 }}>
-                                        <InputLabel>Product</InputLabel>
-                                        <Select
-                                            value={item.product_code}
-                                            onChange={(e) => handleItemChange(index, 'product_code', e.target.value)}
+                                        <TextField
+                                            label="Quantity"
+                                            type="number"
+                                            value={product.quantity}
+                                            onChange={(e) => handleProductChange(index, 'quantity', parseInt(e.target.value) || 0)}
                                             required
+                                            InputProps={{ inputProps: { min: 1 } }}
+                                        />
+
+                                        <TextField
+                                            label="Price"
+                                            type="number"
+                                            value={product.price}
+                                            onChange={(e) => handleProductChange(index, 'price', parseFloat(e.target.value) || 0)}
+                                            required
+                                            InputProps={{ inputProps: { min: 0, step: 0.01 } }}
+                                        />
+
+                                        <Button
+                                            type="button"
+                                            color="error"
+                                            onClick={() => removeProduct(index)}
                                         >
-                                            {products.map(product => (
-                                                <MenuItem key={product.code} value={product.code}>
-                                                    {product.name} (${product.price})
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                    <TextField
-                                        sx={{ flex: 1 }}
-                                        type="number"
-                                        label="Quantity"
-                                        value={item.quantity}
-                                        onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
-                                        required
-                                        inputProps={{ min: 1 }}
-                                    />
-                                    <TextField
-                                        sx={{ flex: 1 }}
-                                        type="number"
-                                        label="Unit Price"
-                                        value={item.unit_price}
-                                        disabled
-                                    />
-                                    <IconButton
-                                        color="error"
-                                        onClick={() => removeItem(index)}
-                                        disabled={formData.items.length === 1}
-                                    >
-                                        <RemoveIcon />
-                                    </IconButton>
+                                            Remove
+                                        </Button>
+                                    </Box>
                                 </Box>
                             ))}
-                            <Button
-                                startIcon={<AddIcon />}
-                                onClick={addItem}
-                                variant="outlined"
-                                size="small"
+                        </Box>
+
+                        <TextField
+                            label="Total Amount"
+                            type="number"
+                            value={formData.total_amount}
+                            InputProps={{
+                                readOnly: true,
+                                inputProps: { min: 0, step: 0.01 }
+                            }}
+                        />
+
+                        <FormControl fullWidth>
+                            <InputLabel>Status</InputLabel>
+                            <Select
+                                name="status"
+                                value={formData.status}
+                                onChange={handleChange}
+                                required
                             >
-                                Add Item
-                            </Button>
-                        </Grid>
-                    </Grid>
+                                <MenuItem value="pending">Pending</MenuItem>
+                                <MenuItem value="processing">Processing</MenuItem>
+                                <MenuItem value="completed">Completed</MenuItem>
+                                <MenuItem value="cancelled">Cancelled</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <FormControl fullWidth>
+                            <InputLabel>Payment Status</InputLabel>
+                            <Select
+                                name="payment_status"
+                                value={formData.payment_status}
+                                onChange={handleChange}
+                                required
+                            >
+                                <MenuItem value="pending">Pending</MenuItem>
+                                <MenuItem value="processing">Processing</MenuItem>
+                                <MenuItem value="paid">Paid</MenuItem>
+                                <MenuItem value="failed">Failed</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={onClose}>Cancel</Button>
                     <Button
                         type="submit"
                         variant="contained"
-                        color="primary"
                         disabled={loading}
                     >
-                        {loading ? 'Creating...' : 'Create Order'}
+                        {loading ? 'Saving...' : (initialData ? 'Save Changes' : 'Create Order')}
                     </Button>
                 </DialogActions>
             </form>

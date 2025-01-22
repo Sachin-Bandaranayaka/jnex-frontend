@@ -30,33 +30,8 @@ export default function OrdersPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/orders');
-
-      // Log the response for debugging
-      console.log('Raw API Response:', response);
-      console.log('API Response Data:', response.data);
-
-      // Initialize empty array
-      let ordersData: Order[] = [];
-
-      // Handle different response structures
-      if (response.data?.data && Array.isArray(response.data.data)) {
-        ordersData = response.data.data;
-      } else if (response.data?.orders && Array.isArray(response.data.orders)) {
-        ordersData = response.data.orders;
-      } else if (Array.isArray(response.data)) {
-        ordersData = response.data;
-      }
-
-      // Ensure each order has the required properties
-      ordersData = ordersData.filter(order => {
-        if (!order || typeof order !== 'object') return false;
-        if (!('id' in order) || !('orderNo' in order) || !('customer' in order)) return false;
-        return true;
-      });
-
-      console.log('Processed Orders:', ordersData);
-      setOrders(ordersData);
+      const response = await api.get('/api/orders');
+      setOrders(response.data);
     } catch (err: any) {
       console.error('Failed to fetch orders:', err);
       if (err.response?.status === 401) {
@@ -64,7 +39,6 @@ export default function OrdersPage() {
       } else {
         setError(err.message || 'Failed to fetch orders. Please try again.');
       }
-      // Set empty array on error
       setOrders([]);
     } finally {
       setLoading(false);
@@ -75,26 +49,34 @@ export default function OrdersPage() {
     fetchOrders(); // Refresh the orders list after creating a new order
   };
 
-  const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      pending: 'warning',
-      confirmed: 'info',
-      processing: 'primary',
-      shipped: 'secondary',
-      delivered: 'success',
-      cancelled: 'error'
-    };
-    return colors[status.toLowerCase()] || 'default';
+  const getStatusColor = (status: string): 'default' | 'success' | 'error' | 'warning' | 'info' | 'primary' | 'secondary' => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'cancelled':
+        return 'error';
+      case 'processing':
+        return 'info';
+      default:
+        return 'default';
+    }
   };
 
-  const getPaymentStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      unpaid: 'error',
-      partially_paid: 'warning',
-      paid: 'success',
-      refunded: 'info'
-    };
-    return colors[status.toLowerCase()] || 'default';
+  const getPaymentStatusColor = (status: string): 'default' | 'success' | 'error' | 'warning' | 'info' | 'primary' | 'secondary' => {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'failed':
+        return 'error';
+      case 'processing':
+        return 'info';
+      default:
+        return 'default';
+    }
   };
 
   if (!user) {
@@ -142,8 +124,8 @@ export default function OrdersPage() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Order No</TableCell>
-                <TableCell>Customer</TableCell>
+                <TableCell>Order ID</TableCell>
+                <TableCell>Customer ID</TableCell>
                 <TableCell>Total Amount</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Payment Status</TableCell>
@@ -165,8 +147,8 @@ export default function OrdersPage() {
                     onClick={() => setSelectedOrder(order)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <TableCell>{order.orderNo}</TableCell>
-                    <TableCell>{order.customer?.name || 'N/A'}</TableCell>
+                    <TableCell>{order.id}</TableCell>
+                    <TableCell>{order.customerId}</TableCell>
                     <TableCell>${(order.totalAmount || 0).toFixed(2)}</TableCell>
                     <TableCell>
                       <Chip

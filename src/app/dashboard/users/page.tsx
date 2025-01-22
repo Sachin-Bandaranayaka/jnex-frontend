@@ -6,88 +6,83 @@ import { useRouter } from "next/navigation";
 import { FaPlus, FaSort, FaEdit, FaTrash, FaUserShield } from "react-icons/fa";
 import UserForm from "@/components/UserForm";
 import { User } from "@/interfaces/interfaces";
+import { useAuth } from "@/context/authContext";
 
-export default function UserManagement() {
+export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState({
-    key: "createdAt",
-    direction: "desc",
-  });
-
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const router = useRouter();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      fetchUsers();
+    }
+  }, [user]);
 
   const fetchUsers = async () => {
     try {
+      setLoading(true);
       setError(null);
-      const response = await api.get("/users");
-      setUsers(response.data);
-    } catch (error: any) {
-      console.error("Error fetching users:", error);
-      if (error.response?.status === 401) {
-        router.push("/login");
+      const response = await api.get("/api/users");
+      // Check if response.data is an array, if not, check if it's nested
+      const usersData = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      setUsers(usersData);
+      console.log('Users data:', usersData); // Debug log
+    } catch (err: any) {
+      console.error("Error fetching users:", err);
+      if (err.response?.status === 401) {
+        router.push('/login');
       } else {
-        setError("Failed to fetch users. Please try again.");
+        setError(err.message || "Failed to fetch users. Please try again.");
       }
+      setUsers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [sortConfig, router]);
-
-  const handleSort = (key: string) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
-    }));
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchUsers();
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
-
+  const handleUserUpdate = async (userData: Partial<User>, userId?: number) => {
     try {
-      setError(null);
-      await api.delete(`/users/${id}`);
-      fetchUsers();
-    } catch (error: any) {
-      console.error("Error deleting user:", error);
-      setError("Failed to delete user. Please try again.");
-    }
-  };
-
-  const handleSubmit = async (data: User) => {
-    try {
-      setError(null);
-      if (editingUser) {
-        await api.patch(`/users/${editingUser.id}`, data);
+      if (userId) {
+        await api.put(`/api/users/${userId}`, userData);
       } else {
-        await api.post("/users", data);
+        await api.post('/api/users', userData);
       }
-      fetchUsers();
+      await fetchUsers();
+      setSelectedUser(null);
       setShowCreateModal(false);
-      setEditingUser(null);
-    } catch (error: any) {
-      console.error("Error saving user:", error);
-      setError("Failed to save user. Please try again.");
+      return true;
+    } catch (error) {
+      console.error('Error saving user:', error);
+      setError('Failed to save user');
+      return false;
     }
   };
+
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p>Please log in to view users</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
+      <div className="flex justify-center items-center min-h-screen">
+        <p>Loading users...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p className="text-red-500">{error}</p>
       </div>
     );
   }
@@ -97,141 +92,88 @@ export default function UserManagement() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">User Management</h1>
         <button
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
           onClick={() => setShowCreateModal(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600"
         >
           <FaPlus /> New User
         </button>
       </div>
 
-      {/* Search Bar */}
-      <form onSubmit={handleSearch} className="mb-6">
-        <div className="flex gap-4">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search users..."
-            className="flex-1 border rounded-lg px-4 py-2"
-          />
-          <button
-            type="submit"
-            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-          >
-            Search
-          </button>
-        </div>
-      </form>
-
-      {/* Users Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort("username")}
-              >
-                Username <FaSort className="inline" />
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort("role")}
-              >
-                Role <FaSort className="inline" />
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Contact Info
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Address
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort("createdAt")}
-              >
-                Created At <FaSort className="inline" />
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <FaUserShield
-                      className={`mr-2 ${
-                        user.role === "admin" ? "text-red-500" : "text-blue-500"
-                      }`}
-                    />
-                    <div className="text-sm font-medium text-gray-900">
-                      {user.username}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.role === "admin"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-blue-100 text-blue-800"
-                    }`}
-                  >
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">{user.phone}</div>
-                  <div className="text-sm text-gray-500">{user.email}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">{user.address}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {user.created_at &&
-                      new Date(user.created_at).toLocaleDateString()}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <button
-                    onClick={() => setEditingUser(user)}
-                    className="text-blue-600 hover:text-blue-900 mr-3"
-                  >
-                    <FaEdit className="inline mr-1" /> Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <FaTrash className="inline mr-1" /> Delete
-                  </button>
-                </td>
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {user.name}
+                    </div>
+                    <div className="text-sm text-gray-500">{user.username}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{user.email}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${user.is_deleted
+                        ? "bg-red-100 text-red-800"
+                        : "bg-green-100 text-green-800"
+                        }`}
+                    >
+                      {user.is_deleted ? "Inactive" : "Active"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => setSelectedUser(user)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      <FaEdit className="inline-block" /> Edit
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* UserForm Modal */}
-      {/* <UserForm
-        open={showCreateModal || !!editingUser}
-        onClose={() => {
-          setShowCreateModal(false);
-          setEditingUser(null);
-        }}
-        onSubmit={handleSubmit}
-        initialData={editingUser || undefined}
-        isEdit={!!editingUser}
-      /> */}
-
-      {error && (
-        <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
-          {error}
-        </div>
+      {(showCreateModal || selectedUser) && (
+        <UserForm
+          open={true}
+          onClose={() => {
+            setShowCreateModal(false);
+            setSelectedUser(null);
+          }}
+          onSubmit={handleUserUpdate}
+          initialData={selectedUser || undefined}
+          isEdit={!!selectedUser}
+        />
       )}
     </div>
   );
