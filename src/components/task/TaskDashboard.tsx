@@ -7,7 +7,7 @@ import { FaPlus } from 'react-icons/fa';
 
 interface TaskDashboardProps {
   tasks: Task[];
-  onTaskUpdate: (taskData: Partial<Task>, taskId?: number) => Promise<boolean>;
+  onTaskUpdate: (taskData: Partial<Task>, taskId?: number | string) => Promise<boolean>;
 }
 
 export default function TaskDashboard({ tasks = [], onTaskUpdate }: TaskDashboardProps) {
@@ -28,12 +28,15 @@ export default function TaskDashboard({ tasks = [], onTaskUpdate }: TaskDashboar
     }
   };
 
-  const handleStatusChange = (task: Task, newStatus: string) => {
+  const handleStatusChange = (task: Task, newStatus: Task['status']) => {
     handleSubmit({
       ...task,
-      status: newStatus as 'pending' | 'in_progress' | 'completed' | 'cancelled'
+      status: newStatus
     });
   };
+
+  // Update the status options to use the Task type
+  const statusOptions: Task['status'][] = ['pending', 'in_progress', 'completed', 'cancelled'];
 
   const getPriorityColor = (priority: string | null | undefined): string => {
     if (!priority) return "bg-gray-100 text-gray-800"; // Default color for null/undefined
@@ -138,16 +141,20 @@ export default function TaskDashboard({ tasks = [], onTaskUpdate }: TaskDashboar
                   </Link>
                 )}
               </div>
+              {task.assigned_to && (
+                <div className="mt-2 text-sm text-gray-500">
+                  Assigned to: {task.assigned_to}
+                </div>
+              )}
 
               <select
                 value={task.status}
-                onChange={(e) => handleStatusChange(task, e.target.value)}
+                onChange={(e) => handleStatusChange(task, e.target.value as Task['status'])}
                 className="border rounded px-2 py-1 text-sm"
               >
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+                ))}
               </select>
             </div>
           </div>

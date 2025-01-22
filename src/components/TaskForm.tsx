@@ -28,7 +28,7 @@ interface TaskFormData {
     title: string;
     description?: string;
     lead_id?: number;
-    staff_user?: number;
+    assigned_to?: string;
     due_date: Date;
     priority: 'low' | 'medium' | 'high';
     task_type: 'follow_up' | 'meeting' | 'call' | 'other';
@@ -40,7 +40,7 @@ export default function TaskForm({ open, onClose, onSubmit, initialData, isEdit 
         title: '',
         description: '',
         lead_id: undefined,
-        staff_user: undefined,
+        assigned_to: undefined,
         due_date: new Date(),
         priority: 'medium',
         task_type: 'follow_up',
@@ -52,12 +52,12 @@ export default function TaskForm({ open, onClose, onSubmit, initialData, isEdit 
 
     useEffect(() => {
         if (initialData) {
-            const { title, description, lead_id, staff_user, due_date, priority, task_type, status } = initialData;
+            const { title, description, lead_id, assigned_to, due_date, priority, task_type, status } = initialData;
             setFormData({
                 title: title || '',
                 description: description || '',
                 lead_id,
-                staff_user,
+                assigned_to,
                 due_date: new Date(due_date),
                 priority: priority as 'low' | 'medium' | 'high',
                 task_type: task_type as 'follow_up' | 'meeting' | 'call' | 'other',

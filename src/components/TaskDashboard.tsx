@@ -156,12 +156,15 @@ export default function TaskDashboard() {
                   {task.status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                 </span>
                 <span className="text-xs text-gray-500">
-                  {task.task_type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  {task.task_type ?
+                    task.task_type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                    : 'General Task'
+                  }
                 </span>
               </div>
-              {task.user && (
+              {task.assigned_to && (
                 <div className="mt-2 text-sm text-gray-500">
-                  Assigned to: {task.user.name}
+                  Assigned to: {task.assigned_to}
                 </div>
               )}
             </div>
