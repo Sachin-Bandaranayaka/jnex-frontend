@@ -6,8 +6,8 @@ import React, {
   useState,
   useEffect,
 } from "react";
-import { useRouter } from 'next/navigation';
-import { authService, LoginCredentials } from '../services/auth.service';
+import { useRouter } from "next/navigation";
+import { authService, LoginCredentials } from "../services/auth.service";
 
 interface AuthContextType {
   user: any;
@@ -40,12 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     try {
       const response = await authService.login(credentials);
-      console.log('Login response:', response);
+      console.log("Login response:", response);
       setUser(response);
-      console.log('Navigating to dashboard...');
-      router.push('/dashboard');
+      console.log("Navigating to dashboard...");
+      router.push("/dashboard");
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       throw error;
     }
   };
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     authService.logout();
     setUser(null);
-    router.push('/login');
+    router.push("/login");
   };
 
   return (
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

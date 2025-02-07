@@ -4,28 +4,28 @@ import type { NextRequest } from "next/server";
 // Define the middleware matcher using the new format
 export const middleware = (request: NextRequest) => {
   const { pathname } = request.nextUrl;
-  const isAuthenticated = request.cookies.has('authToken');
+  const isAuthenticated = request.cookies.has("accessToken");
 
   // Public paths that don't require authentication
-  const publicPaths = ['/login'];
+  const publicPaths = ["/login"];
 
   // Check if the path is public
   const isPublicPath = publicPaths.includes(pathname);
 
   // Redirect to login if trying to access protected route without authentication
   if (!isAuthenticated && !isPublicPath) {
-    const loginUrl = new URL('/login', request.url);
+    const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }
 
   // Redirect to dashboard if trying to access login while authenticated
   if (isAuthenticated && isPublicPath) {
-    const dashboardUrl = new URL('/dashboard', request.url);
+    const dashboardUrl = new URL("/dashboard", request.url);
     return NextResponse.redirect(dashboardUrl);
   }
 
   return NextResponse.next();
-}
+};
 
 export function decodeJWT(token: string | undefined | null) {
   if (!token) {
@@ -35,21 +35,21 @@ export function decodeJWT(token: string | undefined | null) {
 
   try {
     // Check if the token is a valid JWT format (contains two dots)
-    if (!token.includes('.')) {
+    if (!token.includes(".")) {
       console.error("Invalid token format - not a JWT");
       return null;
     }
 
-    const base64Payload = token.split('.')[1];
+    const base64Payload = token.split(".")[1];
     if (!base64Payload) {
       console.error("Invalid token format - no payload");
       return null;
     }
 
     // Add padding if needed
-    const base64 = base64Payload.replace(/-/g, '+').replace(/_/g, '/');
-    const padding = '='.repeat((4 - base64.length % 4) % 4);
-    const jsonPayload = Buffer.from(base64 + padding, 'base64').toString();
+    const base64 = base64Payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+    const jsonPayload = Buffer.from(base64 + padding, "base64").toString();
 
     return JSON.parse(jsonPayload);
   } catch (error) {
@@ -68,6 +68,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
-}
+};

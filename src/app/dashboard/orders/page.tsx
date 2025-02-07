@@ -1,15 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Order } from '@/interfaces/interfaces';
-import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Chip } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
-import ClientOnly from '@/components/ClientOnly';
-import { formatDate } from '@/utils/dateUtils';
-import { api } from '@/lib/api';
-import OrderForm from '@/components/OrderForm';
-import { useAuth } from '@/context/authContext';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { Order } from "@/interfaces/interfaces";
+import {
+  Box,
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+  Chip,
+} from "@mui/material";
+import { Add as AddIcon } from "@mui/icons-material";
+import ClientOnly from "@/components/ClientOnly";
+import { formatDate } from "@/utils/dateUtils";
+import { api } from "@/lib/api";
+import OrderForm from "@/components/OrderForm";
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -30,14 +42,14 @@ export default function OrdersPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/api/orders');
+      const response = await api.get("/api/orders");
       setOrders(response.data);
     } catch (err: any) {
-      console.error('Failed to fetch orders:', err);
+      console.error("Failed to fetch orders:", err);
       if (err.response?.status === 401) {
-        router.push('/login');
+        // router.push('/login');
       } else {
-        setError(err.message || 'Failed to fetch orders. Please try again.');
+        setError(err.message || "Failed to fetch orders. Please try again.");
       }
       setOrders([]);
     } finally {
@@ -49,39 +61,62 @@ export default function OrdersPage() {
     fetchOrders(); // Refresh the orders list after creating a new order
   };
 
-  const getStatusColor = (status: string): 'default' | 'success' | 'error' | 'warning' | 'info' | 'primary' | 'secondary' => {
+  const getStatusColor = (
+    status: string
+  ):
+    | "default"
+    | "success"
+    | "error"
+    | "warning"
+    | "info"
+    | "primary"
+    | "secondary" => {
     switch (status.toLowerCase()) {
-      case 'completed':
-        return 'success';
-      case 'pending':
-        return 'warning';
-      case 'cancelled':
-        return 'error';
-      case 'processing':
-        return 'info';
+      case "completed":
+        return "success";
+      case "pending":
+        return "warning";
+      case "cancelled":
+        return "error";
+      case "processing":
+        return "info";
       default:
-        return 'default';
+        return "default";
     }
   };
 
-  const getPaymentStatusColor = (status: string): 'default' | 'success' | 'error' | 'warning' | 'info' | 'primary' | 'secondary' => {
+  const getPaymentStatusColor = (
+    status: string
+  ):
+    | "default"
+    | "success"
+    | "error"
+    | "warning"
+    | "info"
+    | "primary"
+    | "secondary" => {
     switch (status.toLowerCase()) {
-      case 'paid':
-        return 'success';
-      case 'pending':
-        return 'warning';
-      case 'failed':
-        return 'error';
-      case 'processing':
-        return 'info';
+      case "paid":
+        return "success";
+      case "pending":
+        return "warning";
+      case "failed":
+        return "error";
+      case "processing":
+        return "info";
       default:
-        return 'default';
+        return "default";
     }
   };
 
   if (!user) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
         <Typography>Please log in to view orders</Typography>
       </Box>
     );
@@ -89,7 +124,12 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
         <Typography>Loading orders...</Typography>
       </Box>
     );
@@ -97,7 +137,12 @@ export default function OrdersPage() {
 
   if (error) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
         <Typography color="error">{error}</Typography>
       </Box>
     );
@@ -106,7 +151,12 @@ export default function OrdersPage() {
   return (
     <ClientOnly>
       <Box p={3}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={3}
+        >
           <Typography variant="h5" component="h1">
             Order Management
           </Typography>
@@ -145,26 +195,45 @@ export default function OrdersPage() {
                     key={order.id}
                     hover
                     onClick={() => setSelectedOrder(order)}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                   >
                     <TableCell>{order.id}</TableCell>
                     <TableCell>{order.customerId}</TableCell>
-                    <TableCell>${(order.totalAmount || 0).toFixed(2)}</TableCell>
+                    <TableCell>
+                      ${(order.totalAmount || 0).toFixed(2)}
+                    </TableCell>
                     <TableCell>
                       <Chip
-                        label={order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Unknown'}
-                        color={getStatusColor(order.status || '')}
+                        label={
+                          order.status
+                            ? order.status.charAt(0).toUpperCase() +
+                              order.status.slice(1)
+                            : "Unknown"
+                        }
+                        color={getStatusColor(order.status || "")}
                         size="small"
                       />
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={order.paymentStatus ? order.paymentStatus.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Unknown'}
-                        color={getPaymentStatusColor(order.paymentStatus || '')}
+                        label={
+                          order.paymentStatus
+                            ? order.paymentStatus
+                                .split("_")
+                                .map(
+                                  (word) =>
+                                    word.charAt(0).toUpperCase() + word.slice(1)
+                                )
+                                .join(" ")
+                            : "Unknown"
+                        }
+                        color={getPaymentStatusColor(order.paymentStatus || "")}
                         size="small"
                       />
                     </TableCell>
-                    <TableCell>{order.createdAt ? formatDate(order.createdAt) : 'N/A'}</TableCell>
+                    <TableCell>
+                      {order.createdAt ? formatDate(order.createdAt) : "N/A"}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

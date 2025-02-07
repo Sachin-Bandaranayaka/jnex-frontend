@@ -25,15 +25,17 @@ export default function LeadsPage() {
       setError(null);
       const response = await api.get("/api/leads");
       // Check if response.data is an array, if not, check if it's nested
-      const leadsData = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      const leadsData = Array.isArray(response.data)
+        ? response.data
+        : response.data?.data || [];
       setLeads(leadsData);
-      console.log('Leads data:', leadsData); // Debug log
+      console.log("Leads data:", leadsData); // Debug log
     } catch (err: any) {
-      console.error('Failed to fetch leads:', err);
+      console.error("Failed to fetch leads:", err);
       if (err.response?.status === 401) {
-        router.push('/login');
+        // router.push('/login');
       } else {
-        setError(err.message || 'Failed to fetch leads. Please try again.');
+        setError(err.message || "Failed to fetch leads. Please try again.");
       }
       setLeads([]);
     } finally {
@@ -46,13 +48,13 @@ export default function LeadsPage() {
       if (leadId) {
         await api.put(`/api/leads/${leadId}`, leadData);
       } else {
-        await api.post('/api/leads', leadData);
+        await api.post("/api/leads", leadData);
       }
       await fetchLeads();
       return true;
     } catch (error) {
-      console.error('Error saving lead:', error);
-      setError('Failed to save lead');
+      console.error("Error saving lead:", error);
+      setError("Failed to save lead");
       return false;
     }
   };
@@ -83,10 +85,7 @@ export default function LeadsPage() {
 
   return (
     <div className="p-6">
-      <LeadDashboard
-        leads={leads}
-        onLeadUpdate={handleLeadUpdate}
-      />
+      <LeadDashboard leads={leads} onLeadUpdate={handleLeadUpdate} />
     </div>
   );
 }
