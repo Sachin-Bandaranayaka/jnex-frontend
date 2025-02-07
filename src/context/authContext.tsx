@@ -14,6 +14,7 @@ interface AuthContextType {
   loading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
+  refreshToken: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,14 +27,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const user = authService.getCurrentUser();
-        if (user) {
-          setUser(user);
+        const storedUser = authService.getCurrentUser();
+        if (storedUser) {
+          setUser(storedUser);
+          await refreshToken();
         }
       } finally {
         setLoading(false);
       }
     };
+
     initializeAuth();
   }, []);
 
@@ -50,14 +53,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
-    authService.logout();
+  const refreshToken = async () => {
+    try {
+      const newAccessToken = await authService.refreshToken();
+      console.log("Access token refreshed:", newAccessToken);
+
+      // Fetch updated user details from localStorage
+      const updatedUser = authService.getCurrentUser();
+      setUser(updatedUser); // Update state with refreshed user
+    } catch (error) {
+      console.error("Token refresh failed, logging out...");
+      await logout();
+    }
+  };
+
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
     router.push("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, logout, refreshToken }}
+    >
       {children}
     </AuthContext.Provider>
   );
