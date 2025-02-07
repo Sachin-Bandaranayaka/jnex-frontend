@@ -11,8 +11,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!loading && !user && typeof window !== "undefined") {
-      //  router.push('/login');
+      router.push("/login");
     }
+    console.log("User:", user);
   }, [user, loading, router]);
 
   // Show loading while checking authentication

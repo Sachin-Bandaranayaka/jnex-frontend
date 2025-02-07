@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authService.login(credentials);
       console.log("Login response:", response);
-      setUser(response);
+      setUser(response.user);
       console.log("Navigating to dashboard...");
       router.push("/dashboard");
     } catch (error) {
