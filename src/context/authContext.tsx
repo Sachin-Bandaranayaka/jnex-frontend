@@ -1,3 +1,75 @@
+// "use client";
+// import React, {
+//   createContext,
+//   useContext,
+//   ReactNode,
+//   useState,
+//   useEffect,
+// } from "react";
+// import { useRouter } from "next/navigation";
+// import { authService, LoginCredentials } from "../services/auth.service";
+
+// interface AuthContextType {
+//   user: any;
+//   loading: boolean;
+//   login: (credentials: LoginCredentials) => Promise<void>;
+//   logout: () => void;
+// }
+
+// const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// export function AuthProvider({ children }: { children: ReactNode }) {
+//   const [user, setUser] = useState<any>(null);
+//   const [loading, setLoading] = useState(true);
+//   const router = useRouter();
+
+//   useEffect(() => {
+//     const initializeAuth = async () => {
+//       try {
+//         const user = authService.getCurrentUser();
+//         if (user) {
+//           setUser(user);
+//         }
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     initializeAuth();
+//   }, []);
+
+//   const login = async (credentials: LoginCredentials) => {
+//     try {
+//       const response = await authService.login(credentials);
+//       console.log("Login response:", response);
+//       setUser(response);
+//       router.push("/dashboard");
+//     } catch (error) {
+//       console.error("Login error:", error);
+//       throw error;
+//     }
+//   };
+
+//   const logout = async () => {
+//     await authService.logout();
+//     setUser(null);
+//     router.push("/login");
+//   };
+
+//   return (
+//     <AuthContext.Provider value={{ user, loading, login, logout }}>
+//       {children}
+//     </AuthContext.Provider>
+//   );
+// }
+
+// export function useAuth() {
+//   const context = useContext(AuthContext);
+//   if (context === undefined) {
+//     throw new Error("useAuth must be used within an AuthProvider");
+//   }
+//   return context;
+// }
+
 "use client";
 import React, {
   createContext,
@@ -6,14 +78,15 @@ import React, {
   useState,
   useEffect,
 } from "react";
-import { useRouter } from 'next/navigation';
-import { authService, LoginCredentials } from '../services/auth.service';
+import { useRouter } from "next/navigation";
+import { authService, LoginCredentials } from "../services/auth.service";
 
 interface AuthContextType {
   user: any;
   loading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
+  refreshToken: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,38 +99,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const user = authService.getCurrentUser();
-        if (user) {
-          setUser(user);
+        const storedUser = authService.getCurrentUser();
+        if (storedUser) {
+          setUser(storedUser);
+          await refreshToken();
         }
       } finally {
         setLoading(false);
       }
     };
+
     initializeAuth();
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
     try {
       const response = await authService.login(credentials);
-      console.log('Login response:', response);
-      setUser(response);
-      console.log('Navigating to dashboard...');
-      router.push('/dashboard');
+      console.log("Login response:", response);
+      setUser(response.user);
+      router.push("/dashboard");
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       throw error;
     }
   };
 
-  const logout = () => {
-    authService.logout();
+  const refreshToken = async () => {
+    try {
+      const newAccessToken = await authService.refreshToken();
+      console.log("Access token refreshed:", newAccessToken);
+
+      // Fetch updated user details from localStorage
+      const updatedUser = authService.getCurrentUser();
+      setUser(updatedUser); // Update state with refreshed user
+    } catch (error) {
+      console.error("Token refresh failed, logging out...");
+      await logout();
+    }
+  };
+
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
-    router.push('/login');
+    router.push("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, logout, refreshToken }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -65,8 +155,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

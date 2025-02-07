@@ -1,7 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -21,9 +21,9 @@ api.interceptors.request.use(
     });
 
     // Get the auth token from cookies
-    const authToken = Cookies.get("authToken");
-    if (authToken) {
-      config.headers.Authorization = `Bearer ${authToken}`;
+    const accessToken = Cookies.get("accessToken");
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
     return config;
@@ -42,7 +42,7 @@ api.interceptors.response.use(
     // Handle unauthorized errors (401)
     if (error.response?.status === 401) {
       // Clear the auth token
-      Cookies.remove("authToken");
+      Cookies.remove("accessToken");
 
       // Redirect to login page if we're in the browser
       if (typeof window !== "undefined") {

@@ -1,6 +1,6 @@
 // AUTH
 export interface AuthContextType {
-  authToken: string | null;
+  accessToken: string | null;
   setAuthToken: (token: string | null) => void;
 }
 
@@ -70,8 +70,8 @@ export interface Task {
   id: number | string;
   title: string;
   description: string;
-  priority: 'low' | 'medium' | 'high';
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  priority: "low" | "medium" | "high";
+  status: "pending" | "in_progress" | "completed" | "cancelled";
   task_type: string;
   due_date: string;
   lead_id?: number;
@@ -80,7 +80,12 @@ export interface Task {
   updated_at?: string;
 }
 
-export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+export type LeadStatus =
+  | "new"
+  | "contacted"
+  | "qualified"
+  | "converted"
+  | "lost";
 
 export interface Lead {
   id: string;
@@ -100,7 +105,7 @@ export interface Customer {
   email: string;
   phone: string;
   address: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   totalOrders?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -114,7 +119,7 @@ export interface Product {
   price: number;
   stock: number;
   category: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   createdAt?: string;
   updatedAt?: string;
 }
