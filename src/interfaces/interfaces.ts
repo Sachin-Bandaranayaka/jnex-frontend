@@ -1,7 +1,7 @@
 // AUTH
 export interface AuthContextType {
   accessToken: string | null;
-  setAuthToken: (token: string | null) => void;
+  setAccessToken: (token: string | null) => void;
 }
 
 // COMMON TABLE

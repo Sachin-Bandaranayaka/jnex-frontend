@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Task } from '@/interfaces/interfaces';
-import { api } from '@/lib/api';
-import { useAuth } from '@/context/authContext';
-import { useRouter } from 'next/navigation';
-import TaskDashboard from '@/components/task/TaskDashboard';
+import { useState, useEffect } from "react";
+import { Task } from "@/interfaces/interfaces";
+import { api } from "@/lib/api";
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
+import TaskDashboard from "@/components/task/TaskDashboard";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -24,17 +24,19 @@ export default function TasksPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/api/tasks');
+      const response = await api.get("/api/tasks");
       // Check if response.data is an array, if not, check if it's nested
-      const tasksData = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      const tasksData = Array.isArray(response.data)
+        ? response.data
+        : response.data?.data || [];
       setTasks(tasksData);
-      console.log('Tasks data:', tasksData); // Debug log
+      console.log("Tasks data:", tasksData); // Debug log
     } catch (err: any) {
-      console.error('Failed to fetch tasks:', err);
+      console.error("Failed to fetch tasks:", err);
       if (err.response?.status === 401) {
-        router.push('/login');
+        // router.push('/login');
       } else {
-        setError(err.message || 'Failed to fetch tasks. Please try again.');
+        setError(err.message || "Failed to fetch tasks. Please try again.");
       }
       setTasks([]);
     } finally {
@@ -42,18 +44,21 @@ export default function TasksPage() {
     }
   };
 
-  const handleTaskUpdate = async (taskData: Partial<Task>, taskId?: number | string) => {
+  const handleTaskUpdate = async (
+    taskData: Partial<Task>,
+    taskId?: number | string
+  ) => {
     try {
       if (taskId) {
         await api.put(`/api/tasks/${taskId}`, taskData);
       } else {
-        await api.post('/api/tasks', taskData);
+        await api.post("/api/tasks", taskData);
       }
       await fetchTasks();
       return true;
     } catch (error) {
-      console.error('Error saving task:', error);
-      setError('Failed to save task');
+      console.error("Error saving task:", error);
+      setError("Failed to save task");
       return false;
     }
   };
@@ -84,10 +89,7 @@ export default function TasksPage() {
 
   return (
     <div className="p-6">
-      <TaskDashboard
-        tasks={tasks}
-        onTaskUpdate={handleTaskUpdate}
-      />
+      <TaskDashboard tasks={tasks} onTaskUpdate={handleTaskUpdate} />
     </div>
   );
 }

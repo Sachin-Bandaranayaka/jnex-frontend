@@ -18,7 +18,7 @@ export default function Sidebar() {
 
     if (!token) {
       console.log("No token found, redirecting to login");
-      router.push("/login");
+      // router.push("/login");
       return;
     }
 
@@ -29,7 +29,7 @@ export default function Sidebar() {
       if (!user) {
         console.error("Failed to decode user from token");
         Cookies.remove("accessToken", { path: "/" });
-        router.push("/login");
+        // router.push("/login");
         return;
       }
 
@@ -37,7 +37,7 @@ export default function Sidebar() {
     } catch (error) {
       console.error("Error decoding token:", error);
       Cookies.remove("accessToken", { path: "/" });
-      router.push("/login");
+      //  router.push("/login");
     }
   }, [router]);
 

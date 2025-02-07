@@ -29,13 +29,15 @@ export default function UsersPage() {
       setError(null);
       const response = await api.get("/api/users");
       // Check if response.data is an array, if not, check if it's nested
-      const usersData = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      const usersData = Array.isArray(response.data)
+        ? response.data
+        : response.data?.data || [];
       setUsers(usersData);
-      console.log('Users data:', usersData); // Debug log
+      console.log("Users data:", usersData); // Debug log
     } catch (err: any) {
       console.error("Error fetching users:", err);
       if (err.response?.status === 401) {
-        router.push('/login');
+        //  router.push('/login');
       } else {
         setError(err.message || "Failed to fetch users. Please try again.");
       }
@@ -50,15 +52,15 @@ export default function UsersPage() {
       if (userId) {
         await api.put(`/api/users/${userId}`, userData);
       } else {
-        await api.post('/api/users', userData);
+        await api.post("/api/users", userData);
       }
       await fetchUsers();
       setSelectedUser(null);
       setShowCreateModal(false);
       return true;
     } catch (error) {
-      console.error('Error saving user:', error);
-      setError('Failed to save user');
+      console.error("Error saving user:", error);
+      setError("Failed to save user");
       return false;
     }
   };
@@ -140,10 +142,11 @@ export default function UsersPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 py-1 text-xs rounded-full ${user.is_deleted
-                        ? "bg-red-100 text-red-800"
-                        : "bg-green-100 text-green-800"
-                        }`}
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        user.is_deleted
+                          ? "bg-red-100 text-red-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
                     >
                       {user.is_deleted ? "Inactive" : "Active"}
                     </span>
